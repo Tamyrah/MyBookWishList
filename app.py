@@ -1,70 +1,65 @@
 from flask import Flask, render_template, request, redirect, url_for
-from utils import load_wishlist, save_wishlist
 
-app = Flask(__name__)
+app = Flask(**name**)
 
+# In-memory database (simple for now)
 
-@app.route('/', methods=['GET', 'POST'])
+wishlist = []
+
+@app.route("/", methods=["GET", "POST"])
 def home():
-    wishlist = load_wishlist()
+global wishlist
 
-    # ADD BOOK
-    if request.method == 'POST' and 'add_book' in request.form:
-        new_book = {
-            "title": request.form.get('title', '').strip(),
-            "author": request.form.get('author', '').strip(),
-            "genre": request.form.get('genre', '').strip(),
-            "priority": request.form.get('priority', '').strip(),
-            "status": request.form.get('status', 'Want to Read')
-        }
+```
+if request.method == "POST":
+    new_book = {
+        "title": request.form.get("title"),
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": request.form.get("priority"),
+        "status": request.form.get("status")
+    }
+    wishlist.append(new_book)
+    return redirect(url_for("home"))
 
-        if new_book["title"]:
-            wishlist.append(new_book)
-            save_wishlist(wishlist)
+filter_status = request.args.get("filter")
 
-        return redirect(url_for('home'))
+if filter_status and filter_status != "All":
+    filtered_list = [book for book in wishlist if book["status"] == filter_status]
+else:
+    filtered_list = wishlist
 
-    # REMOVE BOOK
-    if request.method == 'POST' and 'remove_book' in request.form:
-        title = request.form.get('title')
-        wishlist = [book for book in wishlist if book['title'] != title]
-        save_wishlist(wishlist)
-        return redirect(url_for('home'))
+return render_template("home.html", wishlist=filtered_list)
+```
 
-    # EDIT BOOK
-    if request.method == 'POST' and 'edit_book' in request.form:
-        original_title = request.form.get('original_title')
+@app.route("/remove", methods=["POST"])
+def remove_book():
+global wishlist
+title = request.form.get("title")
 
-        for book in wishlist:
-            if book['title'] == original_title:
-                book['title'] = request.form.get('title')
-                book['author'] = request.form.get('author')
-                book['genre'] = request.form.get('genre')
-                book['priority'] = request.form.get('priority')
-                book['status'] = request.form.get('status')
+```
+wishlist = [book for book in wishlist if book["title"] != title]
 
-        save_wishlist(wishlist)
-        return redirect(url_for('home'))
+return redirect(url_for("home"))
+```
 
-    # FILTER
-    filter_status = request.args.get('filter', 'All')
+@app.route("/edit", methods=["POST"])
+def edit_book():
+global wishlist
+original_title = request.form.get("original_title")
 
-    if filter_status != 'All':
-        filtered_list = [book for book in wishlist if book.get('status') == filter_status]
-    else:
-        filtered_list = wishlist
+```
+for book in wishlist:
+    if book["title"] == original_title:
+        book["title"] = request.form.get("title")
+        book["author"] = request.form.get("author")
+        book["genre"] = request.form.get("genre")
+        book["priority"] = request.form.get("priority")
+        book["status"] = request.form.get("status")
 
-    # SORT BY PRIORITY
-    def get_priority(book):
-        try:
-            return int(book.get('priority', 999))
-        except:
-            return 999
+return redirect(url_for("home"))
+```
 
-    filtered_list.sort(key=get_priority)
+if **name** == "**main**":
+app.run(debug=True)
 
-    return render_template('home.html', wishlist=filtered_list, current_filter=filter_status)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
