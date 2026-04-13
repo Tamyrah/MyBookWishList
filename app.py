@@ -14,6 +14,7 @@ def home():
             "author": request.form.get('author', '').strip(),
             "genre": request.form.get('genre', '').strip(),
             "priority": request.form.get('priority', '').strip()
+            status = request.form.get('status', 'Want to Read')
         }
         if new_book["title"]:  # Only save if title exists
             wishlist.append(new_book)
