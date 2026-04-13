@@ -30,6 +30,21 @@ def home():
         save_wishlist(wishlist)
         return redirect(url_for('home'))
 
+    # UPDATE BOOK (EDIT FEATURE 🔥)
+    if request.method == 'POST' and 'edit_book' in request.form:
+        original_title = request.form.get('original_title')
+
+        for book in wishlist:
+            if book['title'] == original_title:
+                book['title'] = request.form.get('title')
+                book['author'] = request.form.get('author')
+                book['genre'] = request.form.get('genre')
+                book['priority'] = request.form.get('priority')
+                book['status'] = request.form.get('status')
+
+        save_wishlist(wishlist)
+        return redirect(url_for('home'))
+
     # FILTER
     filter_status = request.args.get('filter', 'All')
 
@@ -37,6 +52,15 @@ def home():
         filtered_list = [book for book in wishlist if book.get('status') == filter_status]
     else:
         filtered_list = wishlist
+
+    # SORT BY PRIORITY
+    def get_priority(book):
+        try:
+            return int(book.get('priority', 999))
+        except:
+            return 999
+
+    filtered_list.sort(key=get_priority)
 
     return render_template('home.html', wishlist=filtered_list, current_filter=filter_status)
 
