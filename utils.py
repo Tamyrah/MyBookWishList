@@ -1,14 +1,25 @@
-import os, json
-DATA_FILE = 'wishlist.json'
+import json
+import os
 
-# Load wishlist from file
+FILE_PATH = 'wishlist.json'
+
+
 def load_wishlist():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            return json.load(f)
-    return []
+    if not os.path.exists(FILE_PATH):
+        return []
 
-# Save wishlist to file
+    with open(FILE_PATH, 'r') as file:
+        try:
+            data = json.load(file)
+            # Ensure every book has a status
+            for book in data:
+                if 'status' not in book:
+                    book['status'] = 'Want to Read'
+            return data
+        except:
+            return []
+
+
 def save_wishlist(wishlist):
-    with open(DATA_FILE, 'w') as f:
-        json.dump(wishlist, f)
+    with open(FILE_PATH, 'w') as file:
+        json.dump(wishlist, file, indent=4)
