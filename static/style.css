@@ -1,60 +1,60 @@
 body {
-    background-color: #0f172a;
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    padding: 20px;
+  background-color: #0f172a;
+  color: #f1f5f9;
+  font-family: Arial, sans-serif;
 }
 
+/* HEADER */
 h1 {
-    text-align: center;
-    color: #facc15;
+  color: #facc15;
 }
 
-form {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
+/* INPUT FIELDS */
+input,
+select {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
 }
 
-input, select {
-    padding: 8px;
-    border-radius: 5px;
-    border: none;
-}
-
+/* BUTTONS */
 button {
-    background-color: #facc15;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
+  background-color: #facc15;
+  color: black;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 button:hover {
-    opacity: 0.9;
+  background-color: #fde047;
 }
 
+/* 🔥 FILTER BUTTONS (FIXED COLORS) */
+a {
+  display: inline-block;
+  padding: 6px 12px;
+  margin: 5px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: bold;
+  background-color: #334155; /* soft gray */
+  color: #e2e8f0; /* light text */
+}
+
+a:hover {
+  background-color: #475569;
+}
+
+/* BOOK CARD */
 .book-entry {
-    background-color: #1e293b;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.status-want {
-    color: #aaaaaa;
-}
-
-.status-reading {
-    color: #facc15;
-    font-weight: bold;
-}
-
-.status-finished {
-    color: #22c55e;
-    font-weight: bold;
+  background-color: #1e293b;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
 }
 
 
