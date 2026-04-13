@@ -19,16 +19,12 @@
     </p>
 </div>
 
-<!-- FILTER BUTTONS -->
-
 <div style="text-align:center; margin-bottom:15px;">
     <a href="/?filter=All">All</a>
     <a href="/?filter=Want to Read">Want to Read</a>
     <a href="/?filter=Reading">Reading</a>
     <a href="/?filter=Finished">Finished</a>
 </div>
-
-<!-- ADD BOOK FORM -->
 
 <form method="POST" action="{{ url_for('home') }}">
     <input type="text" name="title" placeholder="Title" required>
@@ -50,8 +46,6 @@
 
 <hr>
 
-<!-- BOOK LIST -->
-
 {% for book in wishlist %}
 
 <div class="book-entry">
@@ -63,13 +57,11 @@
 <p><strong>Priority:</strong> {{ book.priority }}</p>
 <p><strong>Status:</strong> {{ book.status }}</p>
 
-<!-- REMOVE -->
 <form action="{{ url_for('remove_book') }}" method="POST">
     <input type="hidden" name="title" value="{{ book.title }}">
     <button type="submit">Remove</button>
 </form>
 
-<!-- EDIT -->
 <form method="POST" action="{{ url_for('edit_book') }}">
     <input type="hidden" name="original_title" value="{{ book.title }}">
 
