@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 
-app = Flask("app")  # <-- THIS WILL NOT BREAK
+app = Flask("app")
 
 wishlist = []
 
@@ -23,7 +23,10 @@ if request.method == "POST":
 filter_status = request.args.get("filter")
 
 if filter_status and filter_status != "All":
-    filtered_list = [book for book in wishlist if book["status"] == filter_status]
+    filtered_list = []
+    for book in wishlist:
+        if book["status"] == filter_status:
+            filtered_list.append(book)
 else:
     filtered_list = wishlist
 
@@ -33,10 +36,16 @@ return render_template("home.html", wishlist=filtered_list)
 @app.route("/remove", methods=["POST"])
 def remove_book():
 global wishlist
-title = request.form.get("title")
 
 ```
-wishlist = [book for book in wishlist if book["title"] != title]
+title = request.form.get("title")
+new_list = []
+
+for book in wishlist:
+    if book["title"] != title:
+        new_list.append(book)
+
+wishlist = new_list
 
 return redirect(url_for("home"))
 ```
@@ -44,9 +53,10 @@ return redirect(url_for("home"))
 @app.route("/edit", methods=["POST"])
 def edit_book():
 global wishlist
-original_title = request.form.get("original_title")
 
 ```
+original_title = request.form.get("original_title")
+
 for book in wishlist:
     if book["title"] == original_title:
         book["title"] = request.form.get("title")
@@ -60,5 +70,3 @@ return redirect(url_for("home"))
 
 if **name** == "**main**":
 app.run(debug=True)
-
-
