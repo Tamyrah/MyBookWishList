@@ -7,7 +7,8 @@ app = Flask(__name__)
 def home():
     wishlist = load_wishlist()
 
-    if request.method == 'POST':
+    # ADD BOOK
+    if request.method == 'POST' and 'add_book' in request.form:
         new_book = {
             "title": request.form.get('title', '').strip(),
             "author": request.form.get('author', '').strip(),
@@ -22,18 +23,22 @@ def home():
 
         return redirect(url_for('home'))
 
-    return render_template('home.html', wishlist=wishlist)
-
-
-@app.route('/remove/<int:index>')
-def remove(index):
-    wishlist = load_wishlist()
-
-    if 0 <= index < len(wishlist):
-        wishlist.pop(index)
+    # REMOVE BOOK
+    if request.method == 'POST' and 'remove_book' in request.form:
+        title = request.form.get('title')
+        wishlist = [book for book in wishlist if book['title'] != title]
         save_wishlist(wishlist)
+        return redirect(url_for('home'))
 
-    return redirect(url_for('home'))
+    # FILTER
+    filter_status = request.args.get('filter', 'All')
+
+    if filter_status != 'All':
+        filtered_list = [book for book in wishlist if book.get('status') == filter_status]
+    else:
+        filtered_list = wishlist
+
+    return render_template('home.html', wishlist=filtered_list, current_filter=filter_status)
 
 
 if __name__ == '__main__':
