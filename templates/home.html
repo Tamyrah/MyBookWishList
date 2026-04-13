@@ -34,12 +34,24 @@
     <p><strong>Author:</strong> {{ book.author }}</p>
     <p><strong>Genre:</strong> {{ book.genre }}</p>
     <p><strong>Priority:</strong> {{ book.priority }}</p>
-    <p><strong>Status:</strong> {{ book.status }}</p>
+
+    <p>
+        <strong>Status:</strong> 
+        <span class="
+            {% if book.status == 'Want to Read' %}status-want
+            {% elif book.status == 'Reading' %}status-reading
+            {% elif book.status == 'Finished' %}status-finished
+            {% endif %}
+        ">
+            {{ book.status }}
+        </span>
+    </p>
 
     <a href="{{ url_for('remove', index=loop.index0) }}">
         <button type="button">Remove</button>
     </a>
 </div>
+
 <hr>
 {% endfor %}
 
@@ -49,7 +61,6 @@
 
 </body>
 </html>
-
 
 
 
