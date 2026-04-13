@@ -50,10 +50,5 @@ def edit_book():
 
 if __name__ == "__main__":
     app.run(debug=True)
-```
-
-Select all the existing text in the file, delete it, paste this in, then commit!
-if **name** == "**main**":
-app.run(debug=True)
 
 
