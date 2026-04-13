@@ -8,14 +8,12 @@ def home():
     wishlist = load_wishlist()
 
     if request.method == 'POST':
-        status = request.form.get('status', 'Want to Read')
-
         new_book = {
             "title": request.form.get('title', '').strip(),
             "author": request.form.get('author', '').strip(),
             "genre": request.form.get('genre', '').strip(),
             "priority": request.form.get('priority', '').strip(),
-            "status": status
+            "status": request.form.get('status', 'Want to Read')
         }
 
         if new_book["title"]:
