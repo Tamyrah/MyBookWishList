@@ -4,23 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Book Wishlist</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        /* FILTER BUTTONS */
+        .filters {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filters a {
+            text-decoration: none;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 6px;
+            background-color: #e0e0e0;
+            color: black;
+            font-weight: bold;
+        }
+
+        .filters a.active {
+            background-color: #f4b400;
+            color: black;
+        }
+
+        /* FORM */
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            padding: 8px 15px;
+            background-color: #f4b400;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* BOOK CARDS */
+        .book {
+            background-color: #2a2a2a;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .status.want {
+            color: #cccccc;
+        }
+
+        .status.reading {
+            color: #f4b400;
+        }
+
+        .status.finished {
+            color: #4caf50;
+        }
+
+    </style>
 </head>
 <body>
 
 <h1>📚 My Book Wishlist</h1>
 
-<!-- FILTER BUTTONS -->
-<div>
-    <a href="/?filter=All">All</a>
-    <a href="/?filter=Want to Read">Want to Read</a>
-    <a href="/?filter=Reading">Reading</a>
-    <a href="/?filter=Finished">Finished</a>
+<!-- FILTERS -->
+<div class="filters">
+    <a href="/?filter=All" class="{{ 'active' if current_filter == 'All' else '' }}">All</a>
+    <a href="/?filter=Want to Read" class="{{ 'active' if current_filter == 'Want to Read' else '' }}">Want to Read</a>
+    <a href="/?filter=Reading" class="{{ 'active' if current_filter == 'Reading' else '' }}">Reading</a>
+    <a href="/?filter=Finished" class="{{ 'active' if current_filter == 'Finished' else '' }}">Finished</a>
 </div>
 
-<br>
-
-<!-- ADD BOOK FORM -->
+<!-- FORM -->
 <form method="POST">
     <input type="hidden" name="add_book" value="1">
 
@@ -38,32 +110,33 @@
     <button type="submit">Add Book</button>
 </form>
 
-<hr>
-
 <!-- BOOK LIST -->
 {% for book in wishlist %}
-<div>
+<div class="book">
     <h3>{{ book.title }}</h3>
     <p><strong>Author:</strong> {{ book.author }}</p>
     <p><strong>Genre:</strong> {{ book.genre }}</p>
     <p><strong>Priority:</strong> {{ book.priority }}</p>
 
-    <!-- STATUS DISPLAY -->
-    <p><strong>Status:</strong> {{ book.status }}</p>
+    <!-- STATUS WITH COLOR -->
+    <p class="status 
+        {% if book.status == 'Want to Read' %}want
+        {% elif book.status == 'Reading' %}reading
+        {% elif book.status == 'Finished' %}finished
+        {% endif %}">
+        Status: {{ book.status }}
+    </p>
 
-    <!-- REMOVE BUTTON -->
+    <!-- REMOVE -->
     <form method="POST">
         <input type="hidden" name="remove_book" value="1">
         <input type="hidden" name="title" value="{{ book.title }}">
         <button type="submit">Remove</button>
     </form>
-
-    <hr>
 </div>
 {% endfor %}
 
-<!-- FOOTER -->
-<p>© Greenleigh Lane</p>
+<p style="text-align:center; margin-top:30px;">© Greenleigh Lane</p>
 
 </body>
 </html>
