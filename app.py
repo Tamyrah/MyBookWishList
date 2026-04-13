@@ -1,8 +1,3 @@
-I can see the error — **IndentationError on line 8** in your book wishlist app. 
-
-Go to GitHub, open **MyBookWishList/app.py** and click Edit. Then replace **everything** in that file with exactly this — the spacing is already done for you, just copy it precisely:
-
-```python
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
