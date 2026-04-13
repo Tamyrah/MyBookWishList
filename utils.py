@@ -6,7 +6,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 
 def load_wishlist():
@@ -46,9 +46,3 @@ def save_wishlist(wishlist):
     conn.commit()
     cur.close()
     conn.close()
-def save_wishlist(wishlist):
-    try:
-        with open(FILE_PATH, 'w') as file:
-            json.dump(wishlist, file, indent=4)
-    except:
-        pass
