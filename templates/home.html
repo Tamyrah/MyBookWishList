@@ -6,12 +6,24 @@
     <title>My Book Wishlist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
 
 <h1>📚 My Book Wishlist</h1>
 
+<!-- FILTER BUTTONS -->
+<div>
+    <a href="/?filter=All">All</a>
+    <a href="/?filter=Want to Read">Want to Read</a>
+    <a href="/?filter=Reading">Reading</a>
+    <a href="/?filter=Finished">Finished</a>
+</div>
+
+<br>
+
+<!-- ADD BOOK FORM -->
 <form method="POST">
+    <input type="hidden" name="add_book" value="1">
+
     <input type="text" name="title" placeholder="Title" required>
     <input type="text" name="author" placeholder="Author">
     <input type="text" name="genre" placeholder="Genre">
@@ -28,40 +40,33 @@
 
 <hr>
 
+<!-- BOOK LIST -->
 {% for book in wishlist %}
-<div class="book-entry">
+<div>
     <h3>{{ book.title }}</h3>
     <p><strong>Author:</strong> {{ book.author }}</p>
     <p><strong>Genre:</strong> {{ book.genre }}</p>
     <p><strong>Priority:</strong> {{ book.priority }}</p>
 
-    <p>
-        <strong>Status:</strong> 
-        <span class="
-            {% if book.status == 'Want to Read' %}status-want
-            {% elif book.status == 'Reading' %}status-reading
-            {% elif book.status == 'Finished' %}status-finished
-            {% endif %}
-        ">
-            {{ book.status }}
-        </span>
-    </p>
+    <!-- STATUS DISPLAY -->
+    <p><strong>Status:</strong> {{ book.status }}</p>
 
-    <a href="{{ url_for('remove', index=loop.index0) }}">
-        <button type="button">Remove</button>
-    </a>
+    <!-- REMOVE BUTTON -->
+    <form method="POST">
+        <input type="hidden" name="remove_book" value="1">
+        <input type="hidden" name="title" value="{{ book.title }}">
+        <button type="submit">Remove</button>
+    </form>
+
+    <hr>
 </div>
-
-<hr>
 {% endfor %}
 
-<footer style="margin-top: 40px; text-align: center; font-size: 14px;">
-    © Greenleigh Lane
-</footer>
+<!-- FOOTER -->
+<p>© Greenleigh Lane</p>
 
 </body>
 </html>
-
 
 
 
