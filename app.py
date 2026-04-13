@@ -3,6 +3,7 @@ from utils import load_wishlist, save_wishlist
 
 app = Flask(__name__)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     wishlist = load_wishlist()
@@ -30,7 +31,7 @@ def home():
         save_wishlist(wishlist)
         return redirect(url_for('home'))
 
-    # UPDATE BOOK (EDIT FEATURE 🔥)
+    # EDIT BOOK
     if request.method == 'POST' and 'edit_book' in request.form:
         original_title = request.form.get('original_title')
 
