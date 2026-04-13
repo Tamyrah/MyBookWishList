@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(**name**)
 
-# In-memory database (simple for now)
-
 wishlist = []
 
 @app.route("/", methods=["GET", "POST"])
