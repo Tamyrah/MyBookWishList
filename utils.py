@@ -1,31 +1,51 @@
-import json
 import os
+import psycopg2
+import json
 
-FILE_PATH = 'wishlist.json'
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_connection():
+    return psycopg2.connect(DATABASE_URL)
 
 
 def load_wishlist():
-    if not os.path.exists(FILE_PATH):
-        return []
+    conn = get_connection()
+    cur = conn.cursor()
 
-    try:
-        with open(FILE_PATH, 'r') as file:
-            data = json.load(file)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS wishlist (
+            id SERIAL PRIMARY KEY,
+            data JSONB
+        )
+    """)
 
-            # Ensure all books have required fields
-            for book in data:
-                book.setdefault("title", "")
-                book.setdefault("author", "")
-                book.setdefault("genre", "")
-                book.setdefault("priority", "")
-                book.setdefault("status", "Want to Read")
+    cur.execute("SELECT data FROM wishlist")
+    rows = cur.fetchall()
 
-            return data
+    wishlist = [row[0] for row in rows]
 
-    except:
-        return []
+    cur.close()
+    conn.close()
+
+    return wishlist
 
 
+def save_wishlist(wishlist):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM wishlist")
+
+    for book in wishlist:
+        cur.execute(
+            "INSERT INTO wishlist (data) VALUES (%s)",
+            [json.dumps(book)]
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
 def save_wishlist(wishlist):
     try:
         with open(FILE_PATH, 'w') as file:
