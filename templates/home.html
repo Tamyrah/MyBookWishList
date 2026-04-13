@@ -1,55 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="A simple, stylish app to manage your personal book wishlist.">
-  <title>📚 My Book Wishlist</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="icon" href="https://fav.farm/📚">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Book Wishlist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
-  <h1>📚 My Book Wishlist</h1>
+<h1>📚 My Book Wishlist</h1>
 
-  <form method="POST" action="{{ url_for('home') }}">
+<form method="POST">
     <input type="text" name="title" placeholder="Title" required>
     <input type="text" name="author" placeholder="Author">
     <input type="text" name="genre" placeholder="Genre">
-    <input type="number" name="priority" placeholder="Priority (1–5)" min="1" max="5">
-      <select name="status" class="form-control">
-    <option value="Want to Read">Want to Read</option>
-    <option value="Reading">Reading</option>
-    <option value="Finished">Finished</option>
-</select>
+    <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
+
+    <select name="status">
+        <option value="Want to Read">Want to Read</option>
+        <option value="Reading">Reading</option>
+        <option value="Finished">Finished</option>
+    </select>
+
     <button type="submit">Add Book</button>
-  </form>
+</form>
 
-  {% for book in wishlist %}
-    <div class="book-entry">
-      <h3>{{ book.title }}</h3>
-      <p><strong>Author:</strong> {{ book.author }}</p>
-      <p><strong>Genre:</strong> {{ book.genre }}</p>
-      <p><strong>Priority:</strong> {{ book.priority }}</p>
-        <p>Status: {{ book.status }}</p>
-      <form action="{{ url_for('remove_book') }}" method="POST">
-        <input type="hidden" name="title" value="{{ book.title }}">
-        <button type="submit" class="remove-button">Remove</button>
-      </form>
-    </div>
-  {% endfor %}
+<hr>
 
-  <footer>
-    <p>Made with ❤️ by Tamyrah & Phoenix</p>
-  </footer>
+{% for book in wishlist %}
+<div class="book-entry">
+    <h3>{{ book.title }}</h3>
+    <p><strong>Author:</strong> {{ book.author }}</p>
+    <p><strong>Genre:</strong> {{ book.genre }}</p>
+    <p><strong>Priority:</strong> {{ book.priority }}</p>
+    <p><strong>Status:</strong> {{ book.status }}</p>
+
+    <a href="{{ url_for('remove', index=loop.index0) }}">
+        <button type="button">Remove</button>
+    </a>
+</div>
+<hr>
+{% endfor %}
+
+<footer style="margin-top: 40px; text-align: center; font-size: 14px;">
+    © Greenleigh Lane
+</footer>
 
 </body>
 </html>
-
 
 
 
