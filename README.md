@@ -17,4 +17,4 @@ A clean, dark-themed Flask app that lets users track books they want to read.
 - JSON
 - GitHub + Render
 
-Built with 💖 by Tamyrah & Phoenix 🐈
+© 2026 Greenleigh Lane. All rights reserved. 
