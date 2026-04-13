@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 
-app = Flask(**name**)
+app = Flask("app")  # <-- THIS WILL NOT BREAK
 
 wishlist = []
 
