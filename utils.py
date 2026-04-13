@@ -2,7 +2,8 @@ import os
 import psycopg2
 import json
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Try both environment variables (Render sometimes uses either)
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("RENDER_DATABASE_URL")
 
 
 def get_connection():
