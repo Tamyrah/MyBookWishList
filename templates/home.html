@@ -1,142 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Book Wishlist</title>
 
     <style>
         body {
-            background-color: #1e1e1e;
+            background: #1f1f1f;
             color: white;
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            font-family: Arial;
         }
 
-        h1 {
-            text-align: center;
-        }
-
-        /* FILTER BUTTONS */
-        .filters {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .filters a {
-            text-decoration: none;
-            padding: 8px 15px;
-            margin: 5px;
-            border-radius: 6px;
-            background-color: #e0e0e0;
-            color: black;
-            font-weight: bold;
-        }
-
-        .filters a.active {
-            background-color: #f4b400;
-            color: black;
-        }
-
-        /* FORM */
-        input, select {
+        input, select, button {
             padding: 8px;
             margin: 5px;
-            border-radius: 5px;
-            border: none;
         }
 
         button {
-            padding: 8px 15px;
-            background-color: #f4b400;
+            background: #f4b400;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
         }
 
-        /* BOOK CARDS */
-        .book {
-            background-color: #2a2a2a;
+        .book-entry {
+            border-top: 1px solid gray;
             padding: 15px;
-            margin-top: 15px;
-            border-radius: 8px;
         }
 
-        .status {
-            font-weight: bold;
+        .status.want { color: #bbbbbb; font-weight: bold; }
+        .status.reading { color: #ffcc00; font-weight: bold; }
+        .status.finished { color: #4caf50; font-weight: bold; }
+
+        .filter-btn {
+            margin: 5px;
+            padding: 6px 10px;
+            background: #ddd;
+            color: black;
+            border-radius: 5px;
+            text-decoration: none;
         }
 
-        .status.want {
-            color: #cccccc;
+        .active-filter {
+            background: #f4b400;
         }
 
-        .status.reading {
-            color: #f4b400;
+        .edit-box {
+            background: #2c2c2c;
+            padding: 10px;
+            margin-top: 10px;
         }
-
-        .status.finished {
-            color: #4caf50;
-        }
-
     </style>
 </head>
+
 <body>
 
 <h1>📚 My Book Wishlist</h1>
 
-<!-- FILTERS -->
-<div class="filters">
-    <a href="/?filter=All" class="{{ 'active' if current_filter == 'All' else '' }}">All</a>
-    <a href="/?filter=Want to Read" class="{{ 'active' if current_filter == 'Want to Read' else '' }}">Want to Read</a>
-    <a href="/?filter=Reading" class="{{ 'active' if current_filter == 'Reading' else '' }}">Reading</a>
-    <a href="/?filter=Finished" class="{{ 'active' if current_filter == 'Finished' else '' }}">Finished</a>
-</div>
+<!-- FILTER -->
+<a href="/?filter=All" class="filter-btn {% if current_filter == 'All' %}active-filter{% endif %}">All</a>
+<a href="/?filter=Want to Read" class="filter-btn {% if current_filter == 'Want to Read' %}active-filter{% endif %}">Want to Read</a>
+<a href="/?filter=Reading" class="filter-btn {% if current_filter == 'Reading' %}active-filter{% endif %}">Reading</a>
+<a href="/?filter=Finished" class="filter-btn {% if current_filter == 'Finished' %}active-filter{% endif %}">Finished</a>
 
-<!-- FORM -->
+<!-- ADD FORM -->
 <form method="POST">
-    <input type="hidden" name="add_book" value="1">
-
     <input type="text" name="title" placeholder="Title" required>
     <input type="text" name="author" placeholder="Author">
     <input type="text" name="genre" placeholder="Genre">
-    <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
-
+    <input type="number" name="priority" placeholder="Priority (1-5)">
+    
     <select name="status">
-        <option value="Want to Read">Want to Read</option>
-        <option value="Reading">Reading</option>
-        <option value="Finished">Finished</option>
+        <option>Want to Read</option>
+        <option>Reading</option>
+        <option>Finished</option>
     </select>
 
-    <button type="submit">Add Book</button>
+    <button type="submit" name="add_book">Add Book</button>
 </form>
 
 <!-- BOOK LIST -->
 {% for book in wishlist %}
-<div class="book">
+<div class="book-entry">
+
     <h3>{{ book.title }}</h3>
     <p><strong>Author:</strong> {{ book.author }}</p>
     <p><strong>Genre:</strong> {{ book.genre }}</p>
     <p><strong>Priority:</strong> {{ book.priority }}</p>
 
-    <!-- STATUS WITH COLOR -->
-    <p class="status 
-        {% if book.status == 'Want to Read' %}want
-        {% elif book.status == 'Reading' %}reading
-        {% elif book.status == 'Finished' %}finished
-        {% endif %}">
-        Status: {{ book.status }}
+    <p>
+        <strong>Status:</strong>
+        <span class="
+        {% if book.status == 'Want to Read' %}status want
+        {% elif book.status == 'Reading' %}status reading
+        {% elif book.status == 'Finished' %}status finished
+        {% endif %}
+        ">
+        {{ book.status }}
+        </span>
     </p>
 
     <!-- REMOVE -->
     <form method="POST">
-        <input type="hidden" name="remove_book" value="1">
         <input type="hidden" name="title" value="{{ book.title }}">
-        <button type="submit">Remove</button>
+        <button name="remove_book">Remove</button>
     </form>
+
+    <!-- EDIT FORM 🔥 -->
+    <div class="edit-box">
+        <form method="POST">
+            <input type="hidden" name="original_title" value="{{ book.title }}">
+
+            <input type="text" name="title" value="{{ book.title }}">
+            <input type="text" name="author" value="{{ book.author }}">
+            <input type="text" name="genre" value="{{ book.genre }}">
+            <input type="number" name="priority" value="{{ book.priority }}">
+
+            <select name="status">
+                <option {% if book.status == 'Want to Read' %}selected{% endif %}>Want to Read</option>
+                <option {% if book.status == 'Reading' %}selected{% endif %}>Reading</option>
+                <option {% if book.status == 'Finished' %}selected{% endif %}>Finished</option>
+            </select>
+
+            <button name="edit_book">Update</button>
+        </form>
+    </div>
+
 </div>
 {% endfor %}
 
-<p style="text-align:center; margin-top:30px;">© Greenleigh Lane</p>
+<p style="margin-top:40px;">© Greenleigh Lane</p>
 
 </body>
 </html>
