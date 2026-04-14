@@ -1,13 +1,15 @@
+import requests
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
 wishlist = []
 
+GOOGLE_BOOKS_API_KEY = "AIzaSyA2ISf62giaamDwzAkQOOQq4TZ3P0Q_HDs"
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     global wishlist
-
     if request.method == "POST":
         new_book = {
             "title": request.form.get("title"),
@@ -18,18 +20,29 @@ def home():
         }
         wishlist.append(new_book)
         return redirect(url_for("home"))
-
     filter_status = request.args.get("filter")
-
     if filter_status and filter_status != "All":
-        filtered_list = []
-        for book in wishlist:
-            if book["status"] == filter_status:
-                filtered_list.append(book)
+        filtered_list = [book for book in wishlist if book["status"] == filter_status]
     else:
         filtered_list = wishlist
-
     return render_template("home.html", wishlist=filtered_list)
+
+@app.route("/search")
+def search():
+    query = request.args.get("q", "")
+    results = []
+    if query:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={GOOGLE_BOOKS_API_KEY}&maxResults=10"
+        response = requests.get(url)
+        data = response.json()
+        for item in data.get("items", []):
+            info = item.get("volumeInfo", {})
+            results.append({
+                "title": info.get("title", "Unknown"),
+                "author": ", ".join(info.get("authors", ["Unknown"])),
+                "genre": ", ".join(info.get("categories", ["Unknown"])),
+            })
+    return render_template("home.html", wishlist=wishlist, search_results=results, query=query)
 
 @app.route("/remove", methods=["POST"])
 def remove_book():
@@ -53,3 +66,4 @@ def edit_book():
 
 if __name__ == "__main__":
     app.run(debug=True)
+   
