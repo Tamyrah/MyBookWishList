@@ -1,20 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Leaflist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
     <style>
         body {
             text-align: center;
         }
-
         .container {
             width: 80%;
             margin: auto;
         }
-
         .book-entry {
             text-align: left;
         }
@@ -25,103 +21,98 @@
 
 <div class="container">
 
-    <!-- 🌿 HEADER (CENTERED AGAIN) -->
-    <h1>🌿 Leaflist</h1>
-    <p>Your personal reading queue</p>
+<h1>🌿 Leaflist</h1>
+<p>Your personal reading queue</p>
 
-    <!-- 🔍 SEARCH BAR -->
-    <form action="/search" method="GET">
-        <input type="text" name="q" placeholder="Search books..." value="{{ query or '' }}">
-        <button type="submit">Search</button>
+<!-- SEARCH -->
+<form action="/search" method="GET">
+    <input type="text" name="q" placeholder="Search books..." value="{{ query or '' }}">
+    <button type="submit">Search</button>
+</form>
+
+<hr>
+
+<!-- SEARCH RESULTS -->
+{% if search_results %}
+<h2>Search Results</h2>
+
+{% for result in search_results %}
+<div class="book-entry">
+    <h3>{{ result.title }}</h3>
+    <p>Author: {{ result.author }}</p>
+    <p>Genre: {{ result.genre }}</p>
+
+    <form method="POST" action="/">
+        <input type="hidden" name="title" value="{{ result.title }}">
+        <input type="hidden" name="author" value="{{ result.author }}">
+        <input type="hidden" name="genre" value="{{ result.genre }}">
+        <input type="hidden" name="priority" value="3">
+        <input type="hidden" name="status" value="Want to Read">
+        <button type="submit">Add to List</button>
+    </form>
+</div>
+{% endfor %}
+{% endif %}
+
+<hr>
+
+<!-- ADD BOOK -->
+<form method="POST">
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
+    <input name="priority" placeholder="Priority">
+
+    <select name="status">
+        <option>Want to Read</option>
+        <option>Reading</option>
+        <option>Finished</option>
+    </select>
+
+    <button type="submit">Add Book</button>
+</form>
+
+<hr>
+
+<!-- FILTER -->
+<a href="/">All</a>
+<a href="/?filter=Want to Read">Want to Read</a>
+<a href="/?filter=Reading">Reading</a>
+<a href="/?filter=Finished">Finished</a>
+
+<hr>
+
+<!-- LIST -->
+{% for book in wishlist %}
+<div class="book-entry">
+    <h3>{{ book[1] }}</h3>
+    <p>Author: {{ book[2] }}</p>
+    <p>Genre: {{ book[3] }}</p>
+    <p>Priority: {{ book[4] }}</p>
+    <p>Status: {{ book[5] }}</p>
+
+    <form method="POST" action="/remove">
+        <input type="hidden" name="title" value="{{ book[1] }}">
+        <button>Remove</button>
     </form>
 
-    <hr>
-
-    <!-- 🔍 SEARCH RESULTS (THIS WAS THE ISSUE) -->
-    {% if search_results is defined and search_results %}
-        <h2>Search Results</h2>
-
-        {% for result in search_results %}
-            <div class="book-entry">
-                <h3>{{ result.title }}</h3>
-                <p><strong>Author:</strong> {{ result.author }}</p>
-                <p><strong>Genre:</strong> {{ result.genre }}</p>
-
-                <!-- ADD TO LIST -->
-                <form method="POST" action="/">
-                    <input type="hidden" name="title" value="{{ result.title }}">
-                    <input type="hidden" name="author" value="{{ result.author }}">
-                    <input type="hidden" name="genre" value="{{ result.genre }}">
-                    <input type="hidden" name="priority" value="3">
-                    <input type="hidden" name="status" value="Want to Read">
-                    <button type="submit">Add to List</button>
-                </form>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <hr>
-
-    <!-- ➕ ADD BOOK -->
-    <form method="POST">
-        <input type="text" name="title" placeholder="Title" required>
-        <input type="text" name="author" placeholder="Author">
-        <input type="text" name="genre" placeholder="Genre">
-        <input type="number" name="priority" placeholder="Priority (1-5)">
+    <form method="POST" action="/edit">
+        <input type="hidden" name="original_title" value="{{ book[1] }}">
+        <input name="title" value="{{ book[1] }}">
+        <input name="author" value="{{ book[2] }}">
+        <input name="genre" value="{{ book[3] }}">
+        <input name="priority" value="{{ book[4] }}">
 
         <select name="status">
-            <option value="Want to Read">Want to Read</option>
-            <option value="Reading">Reading</option>
-            <option value="Finished">Finished</option>
+            <option {% if book[5]=='Want to Read' %}selected{% endif %}>Want to Read</option>
+            <option {% if book[5]=='Reading' %}selected{% endif %}>Reading</option>
+            <option {% if book[5]=='Finished' %}selected{% endif %}>Finished</option>
         </select>
 
-        <button type="submit">Add Book</button>
+        <button>Update</button>
     </form>
-
-    <hr>
-
-    <!-- FILTER -->
-    <a href="/">All</a>
-    <a href="/?filter=Want to Read">Want to Read</a>
-    <a href="/?filter=Reading">Reading</a>
-    <a href="/?filter=Finished">Finished</a>
-
-    <hr>
-
-    <!-- 📚 LIST -->
-    {% for book in wishlist %}
-        <div class="book-entry">
-            <h3>{{ book[1] }}</h3>
-            <p><strong>Author:</strong> {{ book[2] }}</p>
-            <p><strong>Genre:</strong> {{ book[3] }}</p>
-            <p><strong>Priority:</strong> {{ book[4] }}</p>
-            <p><strong>Status:</strong> {{ book[5] }}</p>
-
-            <!-- REMOVE -->
-            <form action="/remove" method="POST">
-                <input type="hidden" name="title" value="{{ book[1] }}">
-                <button type="submit">Remove</button>
-            </form>
-
-            <!-- EDIT -->
-            <form action="/edit" method="POST">
-                <input type="hidden" name="original_title" value="{{ book[1] }}">
-
-                <input type="text" name="title" value="{{ book[1] }}">
-                <input type="text" name="author" value="{{ book[2] }}">
-                <input type="text" name="genre" value="{{ book[3] }}">
-                <input type="number" name="priority" value="{{ book[4] }}">
-
-                <select name="status">
-                    <option {% if book[5]=='Want to Read' %}selected{% endif %}>Want to Read</option>
-                    <option {% if book[5]=='Reading' %}selected{% endif %}>Reading</option>
-                    <option {% if book[5]=='Finished' %}selected{% endif %}>Finished</option>
-                </select>
-
-                <button type="submit">Update</button>
-            </form>
-        </div>
-    {% endfor %}
+</div>
+{% endfor %}
 
 </div>
 
