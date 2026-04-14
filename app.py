@@ -8,9 +8,8 @@ wishlist = []
 
 GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
 
-
 # =========================
-# HOME (GET + POST)
+# HOME
 # =========================
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -30,19 +29,15 @@ def home():
 
         return redirect(url_for("home"))
 
-    return render_template(
-        "home.html",
-        wishlist=wishlist,
-        search_results=None,
-        query=""
-    )
-
+    return render_template("home.html", wishlist=wishlist, search_results=None, query="")
 
 # =========================
-# SEARCH (GET ONLY)
+# SEARCH
 # =========================
 @app.route("/search", methods=["GET"])
 def search():
+    global wishlist
+
     query = request.args.get("q", "")
     results = []
 
@@ -62,16 +57,10 @@ def search():
                     "genre": ", ".join(info.get("categories", ["Unknown"]))
                 })
 
-    return render_template(
-        "home.html",
-        wishlist=wishlist,
-        search_results=results,
-        query=query
-    )
-
+    return render_template("home.html", wishlist=wishlist, search_results=results, query=query)
 
 # =========================
-# ADD FROM SEARCH (POST)
+# ADD FROM SEARCH
 # =========================
 @app.route("/add_from_search", methods=["POST"])
 def add_from_search():
@@ -90,9 +79,8 @@ def add_from_search():
 
     return redirect(url_for("home"))
 
-
 # =========================
-# REMOVE (POST)
+# REMOVE
 # =========================
 @app.route("/remove", methods=["POST"])
 def remove_book():
@@ -101,6 +89,24 @@ def remove_book():
     wishlist = [book for book in wishlist if book["title"] != title]
     return redirect(url_for("home"))
 
+# =========================
+# EDIT (THIS WAS MISSING IN FLOW)
+# =========================
+@app.route("/edit", methods=["POST"])
+def edit_book():
+    global wishlist
+
+    original_title = request.form.get("original_title")
+
+    for book in wishlist:
+        if book["title"] == original_title:
+            book["title"] = request.form.get("title")
+            book["author"] = request.form.get("author")
+            book["genre"] = request.form.get("genre")
+            book["priority"] = request.form.get("priority")
+            book["status"] = request.form.get("status")
+
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)
