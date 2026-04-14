@@ -11,16 +11,16 @@
     <h1>🌿 Leaflist</h1>
     <p>Your personal reading queue</p>
 
-    <!-- 🔍 SEARCH -->
-    <form action="/search" method="get">
-        <input type="text" name="q" placeholder="Search books..." required>
+    <!-- SEARCH -->
+    <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search books..." value="{{ query }}" required>
         <button type="submit">Search</button>
     </form>
 </div>
 
 <hr>
 
-<!-- 🔍 SEARCH RESULTS -->
+<!-- SEARCH RESULTS -->
 {% if search_results %}
 <h2 style="text-align:center;">Search Results</h2>
 
@@ -30,13 +30,12 @@
     <p><strong>Author:</strong> {{ book.author }}</p>
     <p><strong>Genre:</strong> {{ book.genre }}</p>
 
-    <form action="/add_from_search" method="post">
+    <form action="/add_from_search" method="POST">
         <input type="hidden" name="title" value="{{ book.title }}">
         <input type="hidden" name="author" value="{{ book.author }}">
         <input type="hidden" name="genre" value="{{ book.genre }}">
 
-        <!-- ✨ NEW CONTROLS -->
-        <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
+        <input type="number" name="priority" placeholder="Priority (1-5)">
 
         <select name="status">
             <option>Want to Read</option>
@@ -52,14 +51,14 @@
 
 <hr>
 
-<!-- ➕ ADD BOOK MANUALLY -->
+<!-- ADD BOOK -->
 <div style="text-align:center;">
-<form method="POST">
+<form method="POST" action="/">
     <input type="text" name="title" placeholder="Title" required>
     <input type="text" name="author" placeholder="Author">
     <input type="text" name="genre" placeholder="Genre">
     <input type="number" name="priority" placeholder="Priority (1-5)">
-
+    
     <select name="status">
         <option>Want to Read</option>
         <option>Reading</option>
@@ -72,7 +71,7 @@
 
 <hr>
 
-<!-- 📚 WISHLIST -->
+<!-- LIST -->
 {% for book in wishlist %}
 <div class="book-entry">
     <h3>{{ book.title }}</h3>
@@ -81,16 +80,15 @@
     <p><strong>Priority:</strong> {{ book.priority }}</p>
     <p><strong>Status:</strong> {{ book.status }}</p>
 
-    <form action="/remove" method="post">
+    <form action="/remove" method="POST">
         <input type="hidden" name="title" value="{{ book.title }}">
-        <button type="submit">Remove</button>
+        <button>Remove</button>
     </form>
 </div>
 {% endfor %}
 
 </body>
 </html>
-
 
 
 
