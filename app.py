@@ -1,4 +1,3 @@
-import os
 import requests
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
@@ -24,9 +23,9 @@ CREATE TABLE IF NOT EXISTS books (
 conn.commit()
 
 # =========================
-# GOOGLE API KEY
+# GOOGLE BOOKS (NO KEY NEEDED)
 # =========================
-GOOGLE_BOOKS_API_KEY = "your Google API key here"
+# We REMOVE the API key entirely to stop failures
 
 # =========================
 # HOME
@@ -36,7 +35,6 @@ def home():
     if request.method == "POST":
         title = request.form.get("title")
 
-        # prevent duplicates
         cur.execute("SELECT * FROM books WHERE title=?", (title,))
         existing = cur.fetchone()
 
@@ -61,33 +59,43 @@ def home():
     return render_template("home.html", wishlist=books, search_results=None, query="")
 
 # =========================
-# SEARCH
+# SEARCH (FIXED)
 # =========================
-@app.route("/search", methods=["GET"])
+@app.route("/search")
 def search():
     query = request.args.get("q", "")
     results = []
 
     if query:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10&key={GOOGLE_BOOKS_API_KEY}"
-        response = requests.get(url)
+        try:
+            # NOTE: No API key needed
+            url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10"
+            response = requests.get(url)
 
-        if response.status_code == 200:
-            data = response.json()
+            if response.status_code == 200:
+                data = response.json()
 
-            for item in data.get("items", []):
-                info = item.get("volumeInfo", {})
+                for item in data.get("items", []):
+                    info = item.get("volumeInfo", {})
 
-                results.append({
-                    "title": info.get("title", "Unknown"),
-                    "author": ", ".join(info.get("authors", ["Unknown"])),
-                    "genre": ", ".join(info.get("categories", ["Unknown"]))
-                })
+                    results.append({
+                        "title": info.get("title", "Unknown"),
+                        "author": ", ".join(info.get("authors", ["Unknown"])),
+                        "genre": ", ".join(info.get("categories", ["Unknown"]))
+                    })
+
+        except Exception as e:
+            print("SEARCH ERROR:", e)
 
     cur.execute("SELECT * FROM books")
     books = cur.fetchall()
 
-    return render_template("home.html", wishlist=books, search_results=results, query=query)
+    return render_template(
+        "home.html",
+        wishlist=books,
+        search_results=results,
+        query=query
+    )
 
 # =========================
 # ADD FROM SEARCH
