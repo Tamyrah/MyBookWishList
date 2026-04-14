@@ -19,12 +19,57 @@
     </p>
 </div>
 
+<!-- 🔍 SEARCH BAR -->
+
+<form method="GET" action="{{ url_for('search') }}">
+    <input type="text" name="q" placeholder="Search books..." value="{{ query or '' }}">
+    <button type="submit">Search</button>
+</form>
+
+<hr>
+
+<!-- 🔎 SEARCH RESULTS -->
+
+{% if search_results %}
+
+<h2>Search Results</h2>
+
+{% for book in search_results %}
+
+<div class="book-entry">
+    <h3>{{ book.title }}</h3>
+    <p><strong>Author:</strong> {{ book.author }}</p>
+    <p><strong>Genre:</strong> {{ book.genre }}</p>
+
+```
+<!-- ADD FROM SEARCH -->
+<form method="POST" action="{{ url_for('home') }}">
+    <input type="hidden" name="title" value="{{ book.title }}">
+    <input type="hidden" name="author" value="{{ book.author }}">
+    <input type="hidden" name="genre" value="{{ book.genre }}">
+    <input type="hidden" name="priority" value="3">
+    <input type="hidden" name="status" value="Want to Read">
+
+    <button type="submit">Add to List</button>
+</form>
+```
+
+</div>
+{% endfor %}
+
+<hr>
+{% endif %}
+
+<!-- FILTER BUTTONS -->
+
 <div style="text-align:center; margin-bottom:15px;">
     <a href="/?filter=All">All</a>
     <a href="/?filter=Want to Read">Want to Read</a>
     <a href="/?filter=Reading">Reading</a>
     <a href="/?filter=Finished">Finished</a>
 </div>
+
+<!-- ADD BOOK FORM -->
 
 <form method="POST" action="{{ url_for('home') }}">
     <input type="text" name="title" placeholder="Title" required>
@@ -46,6 +91,8 @@
 
 <hr>
 
+<!-- 📚 WISHLIST -->
+
 {% for book in wishlist %}
 
 <div class="book-entry">
@@ -57,11 +104,13 @@
 <p><strong>Priority:</strong> {{ book.priority }}</p>
 <p><strong>Status:</strong> {{ book.status }}</p>
 
+<!-- REMOVE -->
 <form action="{{ url_for('remove_book') }}" method="POST">
     <input type="hidden" name="title" value="{{ book.title }}">
     <button type="submit">Remove</button>
 </form>
 
+<!-- EDIT -->
 <form method="POST" action="{{ url_for('edit_book') }}">
     <input type="hidden" name="original_title" value="{{ book.title }}">
 
@@ -90,6 +139,7 @@
 
 </body>
 </html>
+
 
 
 
