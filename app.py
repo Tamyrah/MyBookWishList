@@ -9,6 +9,7 @@ wishlist = []
 # 🔑 Pull API key from Render environment
 GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
 
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     global wishlist
@@ -18,8 +19,8 @@ def home():
             "title": request.form.get("title"),
             "author": request.form.get("author"),
             "genre": request.form.get("genre"),
-            "priority": request.form.get("priority"),
-            "status": request.form.get("status")
+            "priority": request.form.get("priority") or "3",
+            "status": request.form.get("status") or "Want to Read"
         }
 
         # 🚫 Prevent duplicates
@@ -70,10 +71,11 @@ def add_from_search():
         "title": request.form.get("title"),
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
-        "priority": "3",
-        "status": "Want to Read"
+        "priority": request.form.get("priority") or "3",
+        "status": request.form.get("status") or "Want to Read"
     }
 
+    # 🚫 Prevent duplicates
     if not any(book["title"] == new_book["title"] for book in wishlist):
         wishlist.append(new_book)
 
