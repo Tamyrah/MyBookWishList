@@ -6,9 +6,13 @@ import requests
 app = Flask(__name__)
 
 # =========================
-# DATABASE CONNECTION
+# DATABASE CONNECTION FIXED
 # =========================
 DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Fix for Render postgres:// issue
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
@@ -34,7 +38,7 @@ def init_db():
 init_db()
 
 # =========================
-# HOME
+# HOME PAGE
 # =========================
 @app.route('/')
 def home():
@@ -48,15 +52,15 @@ def home():
     return render_template("home.html", books=books)
 
 # =========================
-# ADD BOOK
+# ADD BOOK (MANUAL)
 # =========================
 @app.route('/add', methods=['POST'])
 def add_book():
-    title = request.form['title']
-    author = request.form['author']
-    genre = request.form['genre']
-    priority = request.form['priority']
-    status = request.form['status']
+    title = request.form.get('title')
+    author = request.form.get('author')
+    genre = request.form.get('genre')
+    priority = request.form.get('priority')
+    status = request.form.get('status')
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -89,11 +93,11 @@ def remove_book(book_id):
 # =========================
 @app.route('/update/<int:book_id>', methods=['POST'])
 def update_book(book_id):
-    title = request.form['title']
-    author = request.form['author']
-    genre = request.form['genre']
-    priority = request.form['priority']
-    status = request.form['status']
+    title = request.form.get('title')
+    author = request.form.get('author')
+    genre = request.form.get('genre')
+    priority = request.form.get('priority')
+    status = request.form.get('status')
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -109,41 +113,50 @@ def update_book(book_id):
     return redirect(url_for('home'))
 
 # =========================
-# SEARCH (GOOGLE BOOKS)
+# SEARCH (GOOGLE BOOKS API)
 # =========================
 @app.route('/search')
 def search():
     query = request.args.get('q')
     api_key = os.environ.get("GOOGLE_BOOKS_API_KEY")
 
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
-    response = requests.get(url)
-    data = response.json()
-
     results = []
 
-    if "items" in data:
-        for item in data["items"]:
-            volume = item["volumeInfo"]
+    if query and api_key:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
+        response = requests.get(url)
+        data = response.json()
 
-            results.append({
-                "title": volume.get("title", "No title"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "genre": ", ".join(volume.get("categories", ["Unknown"]))
-            })
+        if "items" in data:
+            for item in data["items"]:
+                volume = item["volumeInfo"]
 
-    return render_template("home.html", search_results=results)
+                results.append({
+                    "title": volume.get("title", "No title"),
+                    "author": ", ".join(volume.get("authors", ["Unknown"])),
+                    "genre": ", ".join(volume.get("categories", ["Unknown"]))
+                })
+
+    # Also load existing books
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM books ORDER BY id DESC;")
+    books = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template("home.html", books=books, search_results=results)
 
 # =========================
-# ADD FROM SEARCH
+# ADD BOOK FROM SEARCH
 # =========================
 @app.route('/add_from_search', methods=['POST'])
 def add_from_search():
-    title = request.form['title']
-    author = request.form['author']
-    genre = request.form['genre']
-    priority = request.form['priority']
-    status = request.form['status']
+    title = request.form.get('title')
+    author = request.form.get('author')
+    genre = request.form.get('genre')
+    priority = request.form.get('priority')
+    status = request.form.get('status')
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -157,5 +170,8 @@ def add_from_search():
 
     return redirect(url_for('home'))
 
+# =========================
+# RUN APP
+# =========================
 if __name__ == '__main__':
     app.run(debug=True)
