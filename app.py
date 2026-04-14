@@ -1,159 +1,161 @@
-import requests
-import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
+import os
+import psycopg2
+import requests
 
 app = Flask(__name__)
 
 # =========================
-# DATABASE (LOCAL SQLITE)
+# DATABASE CONNECTION
 # =========================
-conn = sqlite3.connect("books.db", check_same_thread=False)
-cur = conn.cursor()
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-cur.execute("""
-CREATE TABLE IF NOT EXISTS books (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    author TEXT,
-    genre TEXT,
-    priority TEXT,
-    status TEXT
-)
-""")
-conn.commit()
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
-# =========================
-# GOOGLE BOOKS (NO KEY NEEDED)
-# =========================
-# We REMOVE the API key entirely to stop failures
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS books (
+            id SERIAL PRIMARY KEY,
+            title TEXT,
+            author TEXT,
+            genre TEXT,
+            priority INTEGER,
+            status TEXT
+        );
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+init_db()
 
 # =========================
 # HOME
 # =========================
-@app.route("/", methods=["GET", "POST"])
+@app.route('/')
 def home():
-    if request.method == "POST":
-        title = request.form.get("title")
-
-        cur.execute("SELECT * FROM books WHERE title=?", (title,))
-        existing = cur.fetchone()
-
-        if not existing:
-            cur.execute("""
-                INSERT INTO books (title, author, genre, priority, status)
-                VALUES (?, ?, ?, ?, ?)
-            """, (
-                title,
-                request.form.get("author"),
-                request.form.get("genre"),
-                request.form.get("priority") or "3",
-                request.form.get("status") or "Want to Read"
-            ))
-            conn.commit()
-
-        return redirect(url_for("home"))
-
-    cur.execute("SELECT * FROM books")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM books ORDER BY id DESC;")
     books = cur.fetchall()
+    cur.close()
+    conn.close()
 
-    return render_template("home.html", wishlist=books, search_results=None, query="")
+    return render_template("home.html", books=books)
 
 # =========================
-# SEARCH (FIXED)
+# ADD BOOK
 # =========================
-@app.route("/search")
+@app.route('/add', methods=['POST'])
+def add_book():
+    title = request.form['title']
+    author = request.form['author']
+    genre = request.form['genre']
+    priority = request.form['priority']
+    status = request.form['status']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO books (title, author, genre, priority, status)
+        VALUES (%s, %s, %s, %s, %s);
+    """, (title, author, genre, priority, status))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(url_for('home'))
+
+# =========================
+# REMOVE BOOK
+# =========================
+@app.route('/remove/<int:book_id>', methods=['POST'])
+def remove_book(book_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM books WHERE id = %s;", (book_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(url_for('home'))
+
+# =========================
+# UPDATE BOOK
+# =========================
+@app.route('/update/<int:book_id>', methods=['POST'])
+def update_book(book_id):
+    title = request.form['title']
+    author = request.form['author']
+    genre = request.form['genre']
+    priority = request.form['priority']
+    status = request.form['status']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE books
+        SET title=%s, author=%s, genre=%s, priority=%s, status=%s
+        WHERE id=%s;
+    """, (title, author, genre, priority, status, book_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(url_for('home'))
+
+# =========================
+# SEARCH (GOOGLE BOOKS)
+# =========================
+@app.route('/search')
 def search():
-    query = request.args.get("q", "")
+    query = request.args.get('q')
+    api_key = os.environ.get("GOOGLE_BOOKS_API_KEY")
+
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
+    response = requests.get(url)
+    data = response.json()
+
     results = []
 
-    if query:
-        try:
-            # NOTE: No API key needed
-            url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10"
-            response = requests.get(url)
+    if "items" in data:
+        for item in data["items"]:
+            volume = item["volumeInfo"]
 
-            if response.status_code == 200:
-                data = response.json()
+            results.append({
+                "title": volume.get("title", "No title"),
+                "author": ", ".join(volume.get("authors", ["Unknown"])),
+                "genre": ", ".join(volume.get("categories", ["Unknown"]))
+            })
 
-                for item in data.get("items", []):
-                    info = item.get("volumeInfo", {})
-
-                    results.append({
-                        "title": info.get("title", "Unknown"),
-                        "author": ", ".join(info.get("authors", ["Unknown"])),
-                        "genre": ", ".join(info.get("categories", ["Unknown"]))
-                    })
-
-        except Exception as e:
-            print("SEARCH ERROR:", e)
-
-    cur.execute("SELECT * FROM books")
-    books = cur.fetchall()
-
-    return render_template(
-        "home.html",
-        wishlist=books,
-        search_results=results,
-        query=query
-    )
+    return render_template("home.html", search_results=results)
 
 # =========================
 # ADD FROM SEARCH
 # =========================
-@app.route("/add_from_search", methods=["POST"])
+@app.route('/add_from_search', methods=['POST'])
 def add_from_search():
-    title = request.form.get("title")
+    title = request.form['title']
+    author = request.form['author']
+    genre = request.form['genre']
+    priority = request.form['priority']
+    status = request.form['status']
 
-    cur.execute("SELECT * FROM books WHERE title=?", (title,))
-    existing = cur.fetchone()
-
-    if not existing:
-        cur.execute("""
-            INSERT INTO books (title, author, genre, priority, status)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            title,
-            request.form.get("author"),
-            request.form.get("genre"),
-            request.form.get("priority") or "3",
-            request.form.get("status") or "Want to Read"
-        ))
-        conn.commit()
-
-    return redirect(url_for("home"))
-
-# =========================
-# REMOVE
-# =========================
-@app.route("/remove", methods=["POST"])
-def remove_book():
-    title = request.form.get("title")
-    cur.execute("DELETE FROM books WHERE title=?", (title,))
-    conn.commit()
-    return redirect(url_for("home"))
-
-# =========================
-# EDIT
-# =========================
-@app.route("/edit", methods=["POST"])
-def edit_book():
-    original_title = request.form.get("original_title")
-
+    conn = get_db_connection()
+    cur = conn.cursor()
     cur.execute("""
-        UPDATE books
-        SET title=?, author=?, genre=?, priority=?, status=?
-        WHERE title=?
-    """, (
-        request.form.get("title"),
-        request.form.get("author"),
-        request.form.get("genre"),
-        request.form.get("priority"),
-        request.form.get("status"),
-        original_title
-    ))
+        INSERT INTO books (title, author, genre, priority, status)
+        VALUES (%s, %s, %s, %s, %s);
+    """, (title, author, genre, priority, status))
     conn.commit()
+    cur.close()
+    conn.close()
 
-    return redirect(url_for("home"))
+    return redirect(url_for('home'))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
