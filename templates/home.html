@@ -2,29 +2,68 @@
 <html>
 <head>
     <title>Leaflist</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: #0d1117;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+        }
+        button {
+            padding: 8px 12px;
+            background: gold;
+            border: none;
+            cursor: pointer;
+        }
+        .book {
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
 </head>
-
 <body>
 
-<div style="text-align:center; margin-top:40px;">
-    <h1>🌿 Leaflist</h1>
-    <p>Your personal reading queue</p>
+<h1>Leaflist</h1>
+<p>Your personal reading queue</p>
 
-    <form action="/search" method="GET">
-        <input type="text" name="q" placeholder="Search books..." value="{{ query }}">
-        <button type="submit">Search</button>
-    </form>
-</div>
+<!-- SEARCH -->
+<form action="/search" method="GET">
+    <input type="text" name="q" placeholder="Search books..." required>
+    <button type="submit">Search</button>
+</form>
 
 <hr>
 
-{% if search_results %}
-<h2 style="text-align:center;">Search Results</h2>
+<!-- ADD MANUAL BOOK -->
+<form action="/add" method="POST">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="text" name="author" placeholder="Author">
+    <input type="text" name="genre" placeholder="Genre">
 
+    <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
+
+    <select name="status">
+        <option value="Want to Read">Want to Read</option>
+        <option value="Reading">Reading</option>
+        <option value="Finished">Finished</option>
+    </select>
+
+    <button type="submit">Add Book</button>
+</form>
+
+<hr>
+
+<!-- SEARCH RESULTS -->
+{% if search_results %}
+<h2>Search Results</h2>
 {% for book in search_results %}
-<div class="book-entry">
-    <h3>{{ book.title }}</h3>
+<div class="book">
+    <p><strong>{{ book.title }}</strong></p>
     <p>{{ book.author }}</p>
     <p>{{ book.genre }}</p>
 
@@ -33,21 +72,15 @@
         <input type="hidden" name="author" value="{{ book.author }}">
         <input type="hidden" name="genre" value="{{ book.genre }}">
 
-        <select name="priority">
-            <option value="1">1 (High)</option>
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
-            <option value="4">4</option>
-            <option value="5">5 (Low)</option>
-        </select>
+        <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
 
         <select name="status">
-            <option>Want to Read</option>
-            <option>Reading</option>
-            <option>Finished</option>
+            <option value="Want to Read">Want to Read</option>
+            <option value="Reading">Reading</option>
+            <option value="Finished">Finished</option>
         </select>
 
-        <button>Add to List</button>
+        <button type="submit">Add to List</button>
     </form>
 </div>
 {% endfor %}
@@ -55,67 +88,23 @@
 
 <hr>
 
-<form method="POST" action="/" style="text-align:center;">
-    <input name="title" placeholder="Title" required>
-    <input name="author" placeholder="Author">
-    <input name="genre" placeholder="Genre">
+<!-- SAVED BOOKS -->
+<h2>Your Books</h2>
+{% for book in books %}
+<div class="book">
+    <p><strong>{{ book[1] }}</strong></p>
+    <p>{{ book[2] }}</p>
+    <p>{{ book[3] }}</p>
+    <p>Priority: {{ book[4] }}</p>
+    <p>Status: {{ book[5] }}</p>
 
-    <select name="priority">
-        <option value="1">1 (High)</option>
-        <option value="2">2</option>
-        <option value="3" selected>3</option>
-        <option value="4">4</option>
-        <option value="5">5 (Low)</option>
-    </select>
-
-    <select name="status">
-        <option>Want to Read</option>
-        <option>Reading</option>
-        <option>Finished</option>
-    </select>
-
-    <button>Add Book</button>
-</form>
-
-<hr>
-
-{% for book in wishlist %}
-<div class="book-entry">
-
-<form action="/edit" method="POST">
-    <input type="hidden" name="original_title" value="{{ book[1] }}">
-
-    <input name="title" value="{{ book[1] }}">
-    <input name="author" value="{{ book[2] }}">
-    <input name="genre" value="{{ book[3] }}">
-
-    <select name="priority">
-        <option value="1" {% if book[4]=='1' %}selected{% endif %}>1</option>
-        <option value="2" {% if book[4]=='2' %}selected{% endif %}>2</option>
-        <option value="3" {% if book[4]=='3' %}selected{% endif %}>3</option>
-        <option value="4" {% if book[4]=='4' %}selected{% endif %}>4</option>
-        <option value="5" {% if book[4]=='5' %}selected{% endif %}>5</option>
-    </select>
-
-    <select name="status">
-        <option {% if book[5]=='Want to Read' %}selected{% endif %}>Want to Read</option>
-        <option {% if book[5]=='Reading' %}selected{% endif %}>Reading</option>
-        <option {% if book[5]=='Finished' %}selected{% endif %}>Finished</option>
-    </select>
-
-    <button>Update</button>
-</form>
-
-<form action="/remove" method="POST">
-    <input type="hidden" name="title" value="{{ book[1] }}">
-    <button>Remove</button>
-</form>
-
+    <form action="/remove/{{ book[0] }}" method="POST">
+        <button type="submit">Remove</button>
+    </form>
 </div>
 {% endfor %}
 
 </body>
 </html>
-
 
 
