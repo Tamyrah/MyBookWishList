@@ -1,43 +1,70 @@
 import os
 import requests
+import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-wishlist = []
+# =========================
+# DATABASE (LOCAL SQLITE)
+# =========================
+conn = sqlite3.connect("books.db", check_same_thread=False)
+cur = conn.cursor()
 
-GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
+cur.execute("""
+CREATE TABLE IF NOT EXISTS books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    author TEXT,
+    genre TEXT,
+    priority TEXT,
+    status TEXT
+)
+""")
+conn.commit()
+
+# =========================
+# GOOGLE API KEY
+# =========================
+GOOGLE_BOOKS_API_KEY = "your Google API key here"
 
 # =========================
 # HOME
 # =========================
 @app.route("/", methods=["GET", "POST"])
 def home():
-    global wishlist
-
     if request.method == "POST":
-        new_book = {
-            "title": request.form.get("title"),
-            "author": request.form.get("author"),
-            "genre": request.form.get("genre"),
-            "priority": request.form.get("priority") or "3",
-            "status": request.form.get("status") or "Want to Read"
-        }
+        title = request.form.get("title")
 
-        if not any(book["title"] == new_book["title"] for book in wishlist):
-            wishlist.append(new_book)
+        # prevent duplicates
+        cur.execute("SELECT * FROM books WHERE title=?", (title,))
+        existing = cur.fetchone()
+
+        if not existing:
+            cur.execute("""
+                INSERT INTO books (title, author, genre, priority, status)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                title,
+                request.form.get("author"),
+                request.form.get("genre"),
+                request.form.get("priority") or "3",
+                request.form.get("status") or "Want to Read"
+            ))
+            conn.commit()
 
         return redirect(url_for("home"))
 
-    return render_template("home.html", wishlist=wishlist, search_results=None, query="")
+    cur.execute("SELECT * FROM books")
+    books = cur.fetchall()
+
+    return render_template("home.html", wishlist=books, search_results=None, query="")
 
 # =========================
 # SEARCH
 # =========================
 @app.route("/search", methods=["GET"])
 def search():
-    global wishlist
-
     query = request.args.get("q", "")
     results = []
 
@@ -57,25 +84,33 @@ def search():
                     "genre": ", ".join(info.get("categories", ["Unknown"]))
                 })
 
-    return render_template("home.html", wishlist=wishlist, search_results=results, query=query)
+    cur.execute("SELECT * FROM books")
+    books = cur.fetchall()
+
+    return render_template("home.html", wishlist=books, search_results=results, query=query)
 
 # =========================
 # ADD FROM SEARCH
 # =========================
 @app.route("/add_from_search", methods=["POST"])
 def add_from_search():
-    global wishlist
+    title = request.form.get("title")
 
-    new_book = {
-        "title": request.form.get("title"),
-        "author": request.form.get("author"),
-        "genre": request.form.get("genre"),
-        "priority": request.form.get("priority") or "3",
-        "status": request.form.get("status") or "Want to Read"
-    }
+    cur.execute("SELECT * FROM books WHERE title=?", (title,))
+    existing = cur.fetchone()
 
-    if not any(book["title"] == new_book["title"] for book in wishlist):
-        wishlist.append(new_book)
+    if not existing:
+        cur.execute("""
+            INSERT INTO books (title, author, genre, priority, status)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            title,
+            request.form.get("author"),
+            request.form.get("genre"),
+            request.form.get("priority") or "3",
+            request.form.get("status") or "Want to Read"
+        ))
+        conn.commit()
 
     return redirect(url_for("home"))
 
@@ -84,27 +119,31 @@ def add_from_search():
 # =========================
 @app.route("/remove", methods=["POST"])
 def remove_book():
-    global wishlist
     title = request.form.get("title")
-    wishlist = [book for book in wishlist if book["title"] != title]
+    cur.execute("DELETE FROM books WHERE title=?", (title,))
+    conn.commit()
     return redirect(url_for("home"))
 
 # =========================
-# EDIT (THIS WAS MISSING IN FLOW)
+# EDIT
 # =========================
 @app.route("/edit", methods=["POST"])
 def edit_book():
-    global wishlist
-
     original_title = request.form.get("original_title")
 
-    for book in wishlist:
-        if book["title"] == original_title:
-            book["title"] = request.form.get("title")
-            book["author"] = request.form.get("author")
-            book["genre"] = request.form.get("genre")
-            book["priority"] = request.form.get("priority")
-            book["status"] = request.form.get("status")
+    cur.execute("""
+        UPDATE books
+        SET title=?, author=?, genre=?, priority=?, status=?
+        WHERE title=?
+    """, (
+        request.form.get("title"),
+        request.form.get("author"),
+        request.form.get("genre"),
+        request.form.get("priority"),
+        request.form.get("status"),
+        original_title
+    ))
+    conn.commit()
 
     return redirect(url_for("home"))
 
