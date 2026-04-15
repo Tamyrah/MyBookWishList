@@ -104,19 +104,40 @@
 
     <h2>Your Books</h2>
 
-    {% for book in books %}
-    <div class="book">
+{% for book in books %}
+<div class="book">
 
-        <h3>{{ book.title }}</h3>
-        <p>{{ book.author }}</p>
-        <p>{{ book.genre }}</p>
-        <p>Priority: {{ book.priority }}</p>
+    <h3>{{ book.title }}</h3>
+    <p>{{ book.author }}</p>
+    <p>{{ book.genre }}</p>
 
-        <p class="status 
-            {% if book.status == 'Want to Read' %}want
-            {% elif book.status == 'Reading' %}reading
-            {% elif book.status == 'Finished' %}finished
-            {% endif %}
+    <p>Priority: {{ book.priority }}</p>
+    <p>Status: {{ book.status }}</p>
+
+    <form action="/update/{{ book.id }}" method="POST">
+        <select name="priority">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+
+        <select name="status">
+            <option value="Want to Read">Want to Read</option>
+            <option value="Reading">Reading</option>
+            <option value="Finished">Finished</option>
+        </select>
+
+        <button type="submit">Update</button>
+    </form>
+
+    <form action="/delete/{{ book.id }}" method="POST">
+        <button type="submit">Remove</button>
+    </form>
+
+</div>
+{% endfor %}
         ">
             Status: {{ book.status }}
         </p>
