@@ -1,9 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+import requests
+import os
 
 app = Flask(__name__)
 app.secret_key = "leaflist_secret_key"
 
 wishlist = []
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -32,6 +36,32 @@ def home():
         filtered_list = wishlist
 
     return render_template("home.html", wishlist=filtered_list)
+
+
+@app.route("/search")
+def search():
+    query = request.args.get("query")
+
+    if not query:
+        return redirect("/")
+
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={GOOGLE_API_KEY}"
+    response = requests.get(url)
+    data = response.json()
+
+    books = []
+
+    if "items" in data:
+        for item in data["items"][:5]:
+            volume = item["volumeInfo"]
+
+            books.append({
+                "title": volume.get("title", "N/A"),
+                "author": ", ".join(volume.get("authors", ["Unknown"])),
+                "genre": ", ".join(volume.get("categories", ["N/A"]))
+            })
+
+    return render_template("home.html", wishlist=wishlist, search_results=books)
 
 
 @app.route("/login", methods=["GET", "POST"])
