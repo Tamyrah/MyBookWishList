@@ -1,33 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
 import requests
 import os
 
 app = Flask(__name__)
-app.secret_key = "leaflist_secret_key"
 
 wishlist = []
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-
-@app.route("/", methods=["GET", "POST"])
+# HOME + FILTER
+@app.route("/", methods=["GET"])
 def home():
-    if "user" not in session:
-        return redirect("/login")
-
-    global wishlist
-
-    if request.method == "POST":
-        new_book = {
-            "title": request.form.get("title"),
-            "author": request.form.get("author"),
-            "genre": request.form.get("genre"),
-            "priority": request.form.get("priority"),
-            "status": request.form.get("status")
-        }
-        wishlist.append(new_book)
-        return redirect("/")
-
     filter_status = request.args.get("filter")
 
     if filter_status and filter_status != "All":
@@ -37,65 +18,30 @@ def home():
 
     return render_template("home.html", wishlist=filtered_list)
 
+# ADD BOOK
+@app.route("/add", methods=["POST"])
+def add_book():
+    new_book = {
+        "title": request.form.get("title"),
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": request.form.get("priority"),
+        "status": request.form.get("status")
+    }
+    wishlist.append(new_book)
+    return redirect(url_for("home"))
 
-@app.route("/search")
-def search():
-    query = request.args.get("query")
-
-    if not query:
-        return redirect("/")
-
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={GOOGLE_API_KEY}"
-    response = requests.get(url)
-    data = response.json()
-
-    books = []
-
-    if "items" in data:
-        for item in data["items"][:5]:
-            volume = item["volumeInfo"]
-
-            books.append({
-                "title": volume.get("title", "N/A"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "genre": ", ".join(volume.get("categories", ["N/A"]))
-            })
-
-    return render_template("home.html", wishlist=wishlist, search_results=books)
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if email and password:
-            session["user"] = email
-            return redirect("/")
-
-    return render_template("login.html")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        return redirect("/login")
-
-    return render_template("register.html")
-
-
+# REMOVE
 @app.route("/remove", methods=["POST"])
 def remove_book():
     global wishlist
     title = request.form.get("title")
     wishlist = [book for book in wishlist if book["title"] != title]
-    return redirect("/")
+    return redirect(url_for("home"))
 
-
+# EDIT
 @app.route("/edit", methods=["POST"])
 def edit_book():
-    global wishlist
     original_title = request.form.get("original_title")
 
     for book in wishlist:
@@ -106,14 +52,35 @@ def edit_book():
             book["priority"] = request.form.get("priority")
             book["status"] = request.form.get("status")
 
-    return redirect("/")
+    return redirect(url_for("home"))
 
+# SEARCH (Google Books)
+@app.route("/search", methods=["GET"])
+def search():
+    query = request.args.get("query")
 
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/login")
+    if not query:
+        return redirect(url_for("home"))
 
+    api_key = os.getenv("GOOGLE_BOOKS_API_KEY")
+
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
+    response = requests.get(url)
+    data = response.json()
+
+    results = []
+
+    if "items" in data:
+        for item in data["items"][:5]:
+            info = item["volumeInfo"]
+
+            results.append({
+                "title": info.get("title", "N/A"),
+                "author": ", ".join(info.get("authors", ["Unknown"])),
+                "genre": ", ".join(info.get("categories", ["N/A"]))
+            })
+
+    return render_template("home.html", wishlist=wishlist, search_results=results)
 
 if __name__ == "__main__":
     app.run(debug=True)
