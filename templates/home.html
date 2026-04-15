@@ -1,61 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Leaflist</title>
-
-    <style>
-        body {
-            background-color: #0f172a;
-            color: white;
-            font-family: Arial;
-            text-align: center;
-        }
-
-        h1 {
-            color: #22c55e;
-        }
-
-        input, select {
-            padding: 8px;
-            margin: 5px;
-            border-radius: 5px;
-            border: none;
-        }
-
-        button {
-            padding: 8px 12px;
-            background-color: #facc15;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .filters button {
-            background-color: #1e293b;
-            color: white;
-            margin: 5px;
-        }
-
-        .book {
-            border-bottom: 1px solid #334155;
-            padding: 15px;
-        }
-
-        .want { color: #facc15; }
-        .reading { color: #38bdf8; }
-        .finished { color: #22c55e; }
-
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-<h1>🌿 Leaflist</h1>
-<p>Your personal reading queue</p>
+<h1 style="text-align:center;">🌿 Leaflist</h1>
+<p style="text-align:center;">Your personal reading queue</p>
 
 <!-- SEARCH -->
-<form action="/search" method="GET">
+<form action="/search" method="GET" style="text-align:center;">
     <input type="text" name="query" placeholder="Search books">
     <button type="submit">Search</button>
 </form>
@@ -63,7 +19,7 @@
 <hr>
 
 <!-- ADD BOOK -->
-<form action="/add" method="POST">
+<form action="/add" method="POST" style="text-align:center;">
     <input type="text" name="title" placeholder="Title" required>
     <input type="text" name="author" placeholder="Author">
     <input type="text" name="genre" placeholder="Genre">
@@ -85,97 +41,72 @@
     <button type="submit">Add Book</button>
 </form>
 
-<!-- FILTER BUTTONS (UNCHANGED AS YOU LIKE THEM) -->
-<div class="filters">
-    <button onclick="window.location.href='/'">All</button>
-    <button onclick="window.location.href='/?filter=Want to Read'">Want to Read</button>
-    <button onclick="window.location.href='/?filter=Reading'">Reading</button>
-    <button onclick="window.location.href='/?filter=Finished'">Finished</button>
+<hr>
+
+<!-- FILTER -->
+<div style="text-align:center;">
+    <a href="/?filter=All">All</a> |
+    <a href="/?filter=Want to Read">Want to Read</a> |
+    <a href="/?filter=Reading">Reading</a> |
+    <a href="/?filter=Finished">Finished</a>
 </div>
 
 <hr>
 
-<!-- SEARCH RESULTS -->
-{% if results %}
-<h2>Search Results</h2>
+<h2 style="text-align:center;">Your Books</h2>
 
-{% for r in results %}
-<div class="book">
-    <h3>{{ r.title }}</h3>
-    <p>{{ r.author }}</p>
-    <p>{{ r.genre }}</p>
-
-    <form action="/add_from_search" method="POST">
-        <input type="hidden" name="title" value="{{ r.title }}">
-        <input type="hidden" name="author" value="{{ r.author }}">
-        <input type="hidden" name="genre" value="{{ r.genre }}">
-
-        <select name="priority">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-        </select>
-
-        <select name="status">
-            <option value="Want to Read">Want to Read</option>
-            <option value="Reading">Reading</option>
-            <option value="Finished">Finished</option>
-        </select>
-
-        <button type="submit">Add to List</button>
-    </form>
-</div>
-{% endfor %}
-{% endif %}
-
-<hr>
-
-<h2>Your Books</h2>
-
-{% for book in books %}
-<div class="book">
-
+{% for book in wishlist %}
+<div style="text-align:center;">
     <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
     <p>{{ book.genre }}</p>
-
     <p>Priority: {{ book.priority }}</p>
+    <p>Status: {{ book.status }}</p>
 
-    <p class="
-        {% if book.status == 'Want to Read' %}want
-        {% elif book.status == 'Reading' %}reading
-        {% elif book.status == 'Finished' %}finished
-        {% endif %}
-    ">
-        Status: {{ book.status }}
-    </p>
+    <!-- REMOVE -->
+    <form action="/remove" method="POST">
+        <input type="hidden" name="title" value="{{ book.title }}">
+        <button type="submit">Remove</button>
+    </form>
 
-    <form action="/update/{{ book.id }}" method="POST">
-        <select name="priority">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-        </select>
+    <!-- EDIT -->
+    <form action="/edit" method="POST">
+        <input type="hidden" name="original_title" value="{{ book.title }}">
+        <input type="text" name="title" value="{{ book.title }}">
+        <input type="text" name="author" value="{{ book.author }}">
+        <input type="text" name="genre" value="{{ book.genre }}">
+        <input type="number" name="priority" value="{{ book.priority }}">
 
         <select name="status">
-            <option value="Want to Read">Want to Read</option>
-            <option value="Reading">Reading</option>
-            <option value="Finished">Finished</option>
+            <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
+            <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
+            <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
         </select>
 
         <button type="submit">Update</button>
     </form>
 
-    <form action="/delete/{{ book.id }}" method="POST">
-        <button type="submit">Remove</button>
-    </form>
-
 </div>
+<hr>
 {% endfor %}
+
+<!-- SEARCH RESULTS -->
+{% if search_results %}
+<h2 style="text-align:center;">Search Results</h2>
+
+{% for result in search_results %}
+<div style="text-align:center;">
+    <h3>{{ result.title }}</h3>
+    <p>{{ result.author }}</p>
+    <p>{{ result.genre }}</p>
+</div>
+<hr>
+{% endfor %}
+{% endif %}
+
+<div style="text-align:center; margin-top:40px; font-size:12px; color:#888;">
+    © 2026 Greenleigh Lane. All rights reserved.
+</div>
 
 </body>
 </html>
