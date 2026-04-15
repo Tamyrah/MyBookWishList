@@ -1,78 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Leaflist</title>
     <style>
         body {
-            background: #0d1117;
+            background-color: #0f172a;
             color: white;
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             text-align: center;
         }
+
+        h1 {
+            color: #22c55e;
+        }
+
+        .subtitle {
+            margin-bottom: 20px;
+            color: #94a3b8;
+        }
+
         input, select {
             padding: 8px;
             margin: 5px;
+            border-radius: 5px;
+            border: none;
         }
+
         button {
             padding: 8px 12px;
-            background: gold;
+            background-color: #facc15;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
-        .book {
-            border: 1px solid #333;
-            padding: 10px;
-            margin: 10px;
+
+        .filters button {
+            background-color: #1e293b;
+            color: white;
+            margin: 5px;
         }
+
+        .book {
+            border-bottom: 1px solid #334155;
+            padding: 15px;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .want { color: #facc15; }
+        .reading { color: #38bdf8; }
+        .finished { color: #22c55e; }
+
     </style>
 </head>
 <body>
 
-<h1>Leaflist</h1>
-<p>Your personal reading queue</p>
+    <h1>🌿 Leaflist</h1>
+    <div class="subtitle">Your personal reading queue</div>
 
-<!-- SEARCH -->
-<form action="/search" method="GET">
-    <input type="text" name="q" placeholder="Search books..." required>
-    <button type="submit">Search</button>
-</form>
+    <!-- SEARCH -->
+    <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search books">
+        <button type="submit">Search</button>
+    </form>
 
-<hr>
+    <hr>
 
-<!-- ADD MANUAL BOOK -->
-<form action="/add" method="POST">
-    <input type="text" name="title" placeholder="Title" required>
-    <input type="text" name="author" placeholder="Author">
-    <input type="text" name="genre" placeholder="Genre">
+    <!-- ADD BOOK -->
+    <form action="/add" method="POST">
+        <input type="text" name="title" placeholder="Title" required>
+        <input type="text" name="author" placeholder="Author">
+        <input type="text" name="genre" placeholder="Genre">
 
-    <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
-
-    <select name="status">
-        <option value="Want to Read">Want to Read</option>
-        <option value="Reading">Reading</option>
-        <option value="Finished">Finished</option>
-    </select>
-
-    <button type="submit">Add Book</button>
-</form>
-
-<hr>
-
-<!-- SEARCH RESULTS -->
-{% if search_results %}
-<h2>Search Results</h2>
-{% for book in search_results %}
-<div class="book">
-    <p><strong>{{ book.title }}</strong></p>
-    <p>{{ book.author }}</p>
-    <p>{{ book.genre }}</p>
-
-    <form action="/add_from_search" method="POST">
-        <input type="hidden" name="title" value="{{ book.title }}">
-        <input type="hidden" name="author" value="{{ book.author }}">
-        <input type="hidden" name="genre" value="{{ book.genre }}">
-
-        <input type="number" name="priority" placeholder="Priority (1-5)" min="1" max="5">
+        <select name="priority">
+            <option value="1">1 (Low)</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5 (High)</option>
+        </select>
 
         <select name="status">
             <option value="Want to Read">Want to Read</option>
@@ -80,29 +89,65 @@
             <option value="Finished">Finished</option>
         </select>
 
-        <button type="submit">Add to List</button>
+        <button type="submit">Add Book</button>
     </form>
-</div>
-{% endfor %}
-{% endif %}
 
-<hr>
+    <!-- FILTER BUTTONS -->
+    <div class="filters">
+        <button onclick="window.location.href='/'">All</button>
+        <button onclick="window.location.href='/?filter=Want to Read'">Want to Read</button>
+        <button onclick="window.location.href='/?filter=Reading'">Reading</button>
+        <button onclick="window.location.href='/?filter=Finished'">Finished</button>
+    </div>
 
-<!-- SAVED BOOKS -->
-<h2>Your Books</h2>
-{% for book in books %}
-<div class="book">
-    <p><strong>{{ book[1] }}</strong></p>
-    <p>{{ book[2] }}</p>
-    <p>{{ book[3] }}</p>
-    <p>Priority: {{ book[4] }}</p>
-    <p>Status: {{ book[5] }}</p>
+    <hr>
 
-    <form action="/remove/{{ book[0] }}" method="POST">
-        <button type="submit">Remove</button>
-    </form>
-</div>
-{% endfor %}
+    <h2>Your Books</h2>
+
+    {% for book in books %}
+    <div class="book">
+
+        <h3>{{ book.title }}</h3>
+        <p>{{ book.author }}</p>
+        <p>{{ book.genre }}</p>
+        <p>Priority: {{ book.priority }}</p>
+
+        <p class="status 
+            {% if book.status == 'Want to Read' %}want
+            {% elif book.status == 'Reading' %}reading
+            {% elif book.status == 'Finished' %}finished
+            {% endif %}
+        ">
+            Status: {{ book.status }}
+        </p>
+
+        <!-- UPDATE FORM -->
+        <form action="/update/{{ book.id }}" method="POST">
+
+            <select name="priority">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+
+            <select name="status">
+                <option value="Want to Read">Want to Read</option>
+                <option value="Reading">Reading</option>
+                <option value="Finished">Finished</option>
+            </select>
+
+            <button type="submit">Update</button>
+        </form>
+
+        <!-- DELETE -->
+        <form action="/delete/{{ book.id }}" method="POST">
+            <button type="submit">Remove</button>
+        </form>
+
+    </div>
+    {% endfor %}
 
 </body>
 </html>
