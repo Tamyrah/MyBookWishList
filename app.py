@@ -1,120 +1,89 @@
-from flask import Flask, render_template, request, redirect
-import requests
-import os
-import json
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
+app.secret_key = "leaflist_secret_key"
 
-DATA_FILE = "wishlist.json"
+wishlist = []
 
-# ---------- LOAD / SAVE ----------
-def load_books():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
-
-def save_books(books):
-    with open(DATA_FILE, "w") as f:
-        json.dump(books, f, indent=4)
-
-# ---------- HOME ----------
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    books = load_books()
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    global wishlist
+
+    if request.method == "POST":
+        new_book = {
+            "title": request.form.get("title"),
+            "author": request.form.get("author"),
+            "genre": request.form.get("genre"),
+            "priority": request.form.get("priority"),
+            "status": request.form.get("status")
+        }
+        wishlist.append(new_book)
+        return redirect(url_for("home"))
+
     filter_status = request.args.get("filter")
 
-    if filter_status:
-        books = [b for b in books if b["status"] == filter_status]
+    if filter_status and filter_status != "All":
+        filtered_list = [book for book in wishlist if book["status"] == filter_status]
+    else:
+        filtered_list = wishlist
 
-    return render_template("home.html", books=books)
+    return render_template("home.html", wishlist=filtered_list)
 
-# ---------- SEARCH ----------
-@app.route("/search")
-def search():
-    query = request.args.get("q")
 
-    if not query:
-        return redirect("/")
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-    API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY")
+        # Simple login (temporary)
+        if email and password:
+            session["user"] = {"email": email}
+            return redirect(url_for("home"))
 
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={API_KEY}"
-    response = requests.get(url).json()
+    return render_template("login.html")
 
-    results = []
 
-    if "items" in response:
-        for item in response["items"][:5]:
-            info = item["volumeInfo"]
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        return redirect(url_for("login"))
 
-            results.append({
-                "title": info.get("title", "Unknown"),
-                "author": ", ".join(info.get("authors", ["Unknown"])),
-                "genre": ", ".join(info.get("categories", ["Unknown"]))
-            })
+    return render_template("register.html")
 
-    return render_template("home.html", books=load_books(), results=results)
 
-# ---------- ADD ----------
-@app.route("/add", methods=["POST"])
-def add():
-    books = load_books()
+@app.route("/remove", methods=["POST"])
+def remove_book():
+    global wishlist
+    title = request.form.get("title")
+    wishlist = [book for book in wishlist if book["title"] != title]
+    return redirect(url_for("home"))
 
-    new_book = {
-        "id": len(books) + 1,
-        "title": request.form.get("title"),
-        "author": request.form.get("author"),
-        "genre": request.form.get("genre"),
-        "priority": request.form.get("priority"),
-        "status": request.form.get("status")
-    }
 
-    books.append(new_book)
-    save_books(books)
+@app.route("/edit", methods=["POST"])
+def edit_book():
+    global wishlist
+    original_title = request.form.get("original_title")
 
-    return redirect("/")
-
-# ---------- ADD FROM SEARCH ----------
-@app.route("/add_from_search", methods=["POST"])
-def add_from_search():
-    books = load_books()
-
-    new_book = {
-        "id": len(books) + 1,
-        "title": request.form.get("title"),
-        "author": request.form.get("author"),
-        "genre": request.form.get("genre"),
-        "priority": request.form.get("priority"),
-        "status": request.form.get("status")
-    }
-
-    books.append(new_book)
-    save_books(books)
-
-    return redirect("/")
-
-# ---------- UPDATE ----------
-@app.route("/update/<int:id>", methods=["POST"])
-def update(id):
-    books = load_books()
-
-    for book in books:
-        if book["id"] == id:
+    for book in wishlist:
+        if book["title"] == original_title:
+            book["title"] = request.form.get("title")
+            book["author"] = request.form.get("author")
+            book["genre"] = request.form.get("genre")
             book["priority"] = request.form.get("priority")
             book["status"] = request.form.get("status")
 
-    save_books(books)
-    return redirect("/")
+    return redirect(url_for("home"))
 
-# ---------- DELETE ----------
-@app.route("/delete/<int:id>", methods=["POST"])
-def delete(id):
-    books = load_books()
-    books = [b for b in books if b["id"] != id]
-    save_books(books)
 
-    return redirect("/")
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
