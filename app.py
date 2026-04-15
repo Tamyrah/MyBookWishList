@@ -1,177 +1,120 @@
-from flask import Flask, render_template, request, redirect, url_for
-import os
-import psycopg2
+from flask import Flask, render_template, request, redirect
 import requests
+import os
+import json
 
 app = Flask(__name__)
 
-# =========================
-# DATABASE CONNECTION FIXED
-# =========================
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATA_FILE = "wishlist.json"
 
-# Fix for Render postgres:// issue
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# ---------- LOAD / SAVE ----------
+def load_books():
+    if not os.path.exists(DATA_FILE):
+        return []
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
 
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+def save_books(books):
+    with open(DATA_FILE, "w") as f:
+        json.dump(books, f, indent=4)
 
-def init_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS books (
-            id SERIAL PRIMARY KEY,
-            title TEXT,
-            author TEXT,
-            genre TEXT,
-            priority INTEGER,
-            status TEXT
-        );
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
-
-init_db()
-
-# =========================
-# HOME PAGE
-# =========================
-@app.route('/')
+# ---------- HOME ----------
+@app.route("/")
 def home():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM books ORDER BY id DESC;")
-    books = cur.fetchall()
-    cur.close()
-    conn.close()
+    books = load_books()
+    filter_status = request.args.get("filter")
+
+    if filter_status:
+        books = [b for b in books if b["status"] == filter_status]
 
     return render_template("home.html", books=books)
 
-# =========================
-# ADD BOOK (MANUAL)
-# =========================
-@app.route('/add', methods=['POST'])
-def add_book():
-    title = request.form.get('title')
-    author = request.form.get('author')
-    genre = request.form.get('genre')
-    priority = request.form.get('priority')
-    status = request.form.get('status')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO books (title, author, genre, priority, status)
-        VALUES (%s, %s, %s, %s, %s);
-    """, (title, author, genre, priority, status))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return redirect(url_for('home'))
-
-# =========================
-# REMOVE BOOK
-# =========================
-@app.route('/remove/<int:book_id>', methods=['POST'])
-def remove_book(book_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM books WHERE id = %s;", (book_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return redirect(url_for('home'))
-
-# =========================
-# UPDATE BOOK
-# =========================
-@app.route('/update/<int:book_id>', methods=['POST'])
-def update_book(book_id):
-    title = request.form.get('title')
-    author = request.form.get('author')
-    genre = request.form.get('genre')
-    priority = request.form.get('priority')
-    status = request.form.get('status')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE books
-        SET title=%s, author=%s, genre=%s, priority=%s, status=%s
-        WHERE id=%s;
-    """, (title, author, genre, priority, status, book_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return redirect(url_for('home'))
-
-# =========================
-# SEARCH (GOOGLE BOOKS API)
-# =========================
-@app.route('/search')
+# ---------- SEARCH ----------
+@app.route("/search")
 def search():
-    query = request.args.get('q')
-    api_key = os.environ.get("GOOGLE_BOOKS_API_KEY")
+    query = request.args.get("q")
+
+    if not query:
+        return redirect("/")
+
+    API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY")
+
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={API_KEY}"
+    response = requests.get(url).json()
 
     results = []
 
-    if query and api_key:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
-        response = requests.get(url)
-        data = response.json()
+    if "items" in response:
+        for item in response["items"][:5]:
+            info = item["volumeInfo"]
 
-        if "items" in data:
-            for item in data["items"]:
-                volume = item["volumeInfo"]
+            results.append({
+                "title": info.get("title", "Unknown"),
+                "author": ", ".join(info.get("authors", ["Unknown"])),
+                "genre": ", ".join(info.get("categories", ["Unknown"]))
+            })
 
-                results.append({
-                    "title": volume.get("title", "No title"),
-                    "author": ", ".join(volume.get("authors", ["Unknown"])),
-                    "genre": ", ".join(volume.get("categories", ["Unknown"]))
-                })
+    return render_template("home.html", books=load_books(), results=results)
 
-    # Also load existing books
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM books ORDER BY id DESC;")
-    books = cur.fetchall()
-    cur.close()
-    conn.close()
+# ---------- ADD ----------
+@app.route("/add", methods=["POST"])
+def add():
+    books = load_books()
 
-    return render_template("home.html", books=books, search_results=results)
+    new_book = {
+        "id": len(books) + 1,
+        "title": request.form.get("title"),
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": request.form.get("priority"),
+        "status": request.form.get("status")
+    }
 
-# =========================
-# ADD BOOK FROM SEARCH
-# =========================
-@app.route('/add_from_search', methods=['POST'])
+    books.append(new_book)
+    save_books(books)
+
+    return redirect("/")
+
+# ---------- ADD FROM SEARCH ----------
+@app.route("/add_from_search", methods=["POST"])
 def add_from_search():
-    title = request.form.get('title')
-    author = request.form.get('author')
-    genre = request.form.get('genre')
-    priority = request.form.get('priority')
-    status = request.form.get('status')
+    books = load_books()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO books (title, author, genre, priority, status)
-        VALUES (%s, %s, %s, %s, %s);
-    """, (title, author, genre, priority, status))
-    conn.commit()
-    cur.close()
-    conn.close()
+    new_book = {
+        "id": len(books) + 1,
+        "title": request.form.get("title"),
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": request.form.get("priority"),
+        "status": request.form.get("status")
+    }
 
-    return redirect(url_for('home'))
+    books.append(new_book)
+    save_books(books)
 
-# =========================
-# RUN APP
-# =========================
-if __name__ == '__main__':
+    return redirect("/")
+
+# ---------- UPDATE ----------
+@app.route("/update/<int:id>", methods=["POST"])
+def update(id):
+    books = load_books()
+
+    for book in books:
+        if book["id"] == id:
+            book["priority"] = request.form.get("priority")
+            book["status"] = request.form.get("status")
+
+    save_books(books)
+    return redirect("/")
+
+# ---------- DELETE ----------
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete(id):
+    books = load_books()
+    books = [b for b in books if b["id"] != id]
+    save_books(books)
+
+    return redirect("/")
+
+if __name__ == "__main__":
     app.run(debug=True)
