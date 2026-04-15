@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 import requests
 import os
 
@@ -28,16 +28,18 @@ def add_book():
         "priority": request.form.get("priority"),
         "status": request.form.get("status")
     }
+
     wishlist.append(new_book)
-    return redirect(url_for("home"))
+    return redirect("/")
 
 # REMOVE
 @app.route("/remove", methods=["POST"])
 def remove_book():
     global wishlist
     title = request.form.get("title")
+
     wishlist = [book for book in wishlist if book["title"] != title]
-    return redirect(url_for("home"))
+    return redirect("/")
 
 # EDIT
 @app.route("/edit", methods=["POST"])
@@ -52,15 +54,15 @@ def edit_book():
             book["priority"] = request.form.get("priority")
             book["status"] = request.form.get("status")
 
-    return redirect(url_for("home"))
+    return redirect("/")
 
-# SEARCH (Google Books)
+# SEARCH
 @app.route("/search", methods=["GET"])
 def search():
     query = request.args.get("query")
 
     if not query:
-        return redirect(url_for("home"))
+        return redirect("/")
 
     api_key = os.getenv("GOOGLE_BOOKS_API_KEY")
 
