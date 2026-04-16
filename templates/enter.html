@@ -1,80 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Leaflist</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            text-align: center;
-            box-shadow: 0 0 40px rgba(0,0,0,0.3);
-        }
-
-        h1 {
-            margin-bottom: 10px;
-        }
-
-        input {
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            margin-right: 10px;
-        }
-
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            background: #facc15;
-            cursor: pointer;
-        }
-    </style>
+    <title>Enter</title>
 </head>
-<body>
+<body style="text-align:center; margin-top:100px;">
 
-<div class="glass">
-    <h1>🌿 Leaflist</h1>
-    <p>Enter your name to begin</p>
+<h2>Enter Your Name</h2>
 
-    <form id="userForm">
-        <input type="text" id="username" placeholder="Your name" required>
-        <button type="submit">Enter</button>
-    </form>
-</div>
-
-<script>
-    // If user already saved → skip this page
-    const existingUser = localStorage.getItem("leaflist_user");
-
-    if (existingUser) {
-        window.location.href = "/?user=" + encodeURIComponent(existingUser);
-    }
-
-    // Save user + redirect
-    document.getElementById("userForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const name = document.getElementById("username").value.trim();
-
-        if (name) {
-            localStorage.setItem("leaflist_user", name);
-            window.location.href = "/?user=" + encodeURIComponent(name);
-        }
-    });
-</script>
+<form method="POST" action="/enter">
+    <input name="user" required>
+    <button type="submit">Continue</button>
+</form>
 
 </body>
 </html>
