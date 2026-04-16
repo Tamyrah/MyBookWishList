@@ -4,6 +4,7 @@
 <title>Leaflist</title>
 
 <style>
+
 body {
     background: linear-gradient(135deg, #0f172a, #1e1b4b, #020617);
     color: white;
@@ -12,32 +13,55 @@ body {
 }
 
 .container {
-    width: 80%;
+    width: 85%;
     margin: auto;
 }
 
+/* GLASS CARDS */
 .glass {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
     border-radius: 15px;
     padding: 20px;
-    margin: 20px;
+    margin: 20px auto;
+    width: 90%;
 }
 
+/* INPUTS */
 input, select {
     padding: 8px;
     margin: 5px;
+    border-radius: 6px;
+    border: none;
 }
 
+/* BUTTONS */
 button {
     padding: 8px 12px;
     margin: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
+/* BUTTON COLORS */
+.add { background: #facc15; color: black; }
+.update { background: #60a5fa; color: black; }
+.delete { background: #ef4444; color: white; }
+
+/* FILTER LINKS (FIXED VISIBILITY) */
 .filters a {
     color: white;
-    margin: 0 10px;
+    margin: 0 8px;
     text-decoration: none;
+    font-weight: bold;
 }
+
+/* STATUS COLORS */
+.want { color: #60a5fa; font-weight: bold; }
+.reading { color: #facc15; font-weight: bold; }
+.finished { color: #34d399; font-weight: bold; }
+
 </style>
 </head>
 
@@ -65,9 +89,9 @@ button {
 
 <!-- ADD BOOK -->
 <form method="POST" action="/?user={{user}}">
-    <input type="text" name="title" placeholder="Title" required>
-    <input type="text" name="author" placeholder="Author">
-    <input type="text" name="genre" placeholder="Genre">
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
 
     <select name="priority">
         <option>1</option>
@@ -81,7 +105,7 @@ button {
         <option>Finished</option>
     </select>
 
-    <button type="submit">Add Book</button>
+    <button type="submit" class="add">Add Book</button>
 </form>
 
 <h2>Your Books</h2>
@@ -92,7 +116,14 @@ button {
 <h3>{{ book.title }}</h3>
 <p>{{ book.author }} | {{ book.genre }}</p>
 <p>Priority: {{ book.priority }}</p>
-<p>Status: {{ book.status }}</p>
+
+<p class="
+{% if book.status == 'Want to Read' %}want
+{% elif book.status == 'Reading' %}reading
+{% else %}finished{% endif %}
+">
+Status: {{ book.status }}
+</p>
 
 <!-- UPDATE -->
 <form method="POST" action="/update">
@@ -115,14 +146,14 @@ button {
         <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
     </select>
 
-    <button type="submit">Update</button>
+    <button type="submit" class="update">Update</button>
 </form>
 
 <!-- DELETE -->
 <form method="POST" action="/delete">
     <input type="hidden" name="id" value="{{ book.id }}">
     <input type="hidden" name="user" value="{{ user }}">
-    <button type="submit">Remove</button>
+    <button type="submit" class="delete">Remove</button>
 </form>
 
 </div>
