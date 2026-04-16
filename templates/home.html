@@ -8,7 +8,12 @@
 <style>
     body {
         font-family: Arial, sans-serif;
-        background: radial-gradient(circle at top, #1f3b4d, #0f2027);
+
+        background:
+            radial-gradient(circle at 20% 20%, rgba(0, 255, 200, 0.15), transparent),
+            radial-gradient(circle at 80% 30%, rgba(0, 150, 255, 0.15), transparent),
+            radial-gradient(circle at bottom, #0f2027, #0a192f);
+
         color: white;
         text-align: center;
     }
@@ -25,7 +30,7 @@
     }
 
     p {
-        opacity: 0.8;
+        opacity: 0.85;
     }
 
     form {
@@ -35,7 +40,7 @@
     input, select, button {
         padding: 10px;
         margin: 5px;
-        border-radius: 10px;
+        border-radius: 12px;
         border: none;
     }
 
@@ -67,21 +72,22 @@
         color: white;
     }
 
-    /* 🌿 GLASS CARD (REAL VERSION) */
+    /* 🌿 REAL GLASS UI */
     .card {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
 
         border-radius: 20px;
         padding: 20px;
         margin: 25px 0;
 
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.25);
 
         box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.6),
-            inset 0 0 10px rgba(255, 255, 255, 0.05);
+            0 10px 40px rgba(0, 0, 0, 0.6),
+            0 0 20px rgba(0, 255, 200, 0.15),
+            inset 0 0 15px rgba(255, 255, 255, 0.1);
     }
 
     img {
@@ -89,8 +95,8 @@
         border-radius: 10px;
     }
 
-    .status-want { color: #00bfff; }
-    .status-reading { color: #f1c40f; }
+    .status-want { color: #00d4ff; }
+    .status-reading { color: #ffd166; }
     .status-finished { color: #2ecc71; }
 
     .filters button {
