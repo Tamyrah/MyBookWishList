@@ -10,7 +10,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# -----------------------
 # HOME
+# -----------------------
 @app.route("/")
 def home():
     user_key = request.args.get("user")
@@ -18,11 +20,14 @@ def home():
     if not user_key:
         return render_template("enter.html")
 
-    books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
+    response = supabase.table("books").select("*").eq("user_id", user_key).execute()
+    books = response.data if response.data else []
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
+# -----------------------
 # ADD
+# -----------------------
 @app.route("/add", methods=["POST"])
 def add_book():
     user_key = request.form.get("user_key")
@@ -38,7 +43,9 @@ def add_book():
 
     return redirect(f"/?user={user_key}")
 
-# REMOVE (stronger match)
+# -----------------------
+# REMOVE (FIXED)
+# -----------------------
 @app.route("/remove", methods=["POST"])
 def remove_book():
     user_key = request.form.get("user_key")
@@ -52,7 +59,9 @@ def remove_book():
 
     return redirect(f"/?user={user_key}")
 
+# -----------------------
 # UPDATE
+# -----------------------
 @app.route("/update", methods=["POST"])
 def update_book():
     user_key = request.form.get("user_key")
@@ -67,13 +76,17 @@ def update_book():
 
     return redirect(f"/?user={user_key}")
 
-# SEARCH WITH COVER + DESCRIPTION
+# -----------------------
+# SEARCH (SAFE VERSION)
+# -----------------------
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
     query = request.args.get("query")
 
-    books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
+    response = supabase.table("books").select("*").eq("user_id", user_key).execute()
+    books = response.data if response.data else []
+
     results = []
 
     if query and query.strip() != "":
@@ -93,8 +106,7 @@ def search():
                     image = info["imageLinks"].get("thumbnail", "")
 
                 description = info.get("description", "No description available.")
-                if description:
-                    description = description[:200] + "..."
+                description = description[:200] + "..." if description else ""
 
                 results.append({
                     "title": title,
