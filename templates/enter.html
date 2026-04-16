@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflist</title>
+</head>
+
+<body style="text-align:center;">
+
+<h2>Welcome to Leaflist 🌿</h2>
+<p>Enter your name to begin:</p>
+
+<input id="userInput" placeholder="Your name">
+<button onclick="start()">Enter</button>
+
+<script>
+function start() {
+    let user = document.getElementById("userInput").value;
+
+    if (!user) {
+        alert("Please enter a name");
+        return;
+    }
+
+    localStorage.setItem("leaflist_user", user);
+    window.location.href = "/?user=" + encodeURIComponent(user);
+}
+
+window.onload = function() {
+    let saved = localStorage.getItem("leaflist_user");
+
+    if (saved && saved !== "None") {
+        window.location.href = "/?user=" + encodeURIComponent(saved);
+    }
+}
+</script>
+
+</body>
+</html>
