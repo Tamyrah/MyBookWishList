@@ -155,24 +155,32 @@ Status: {{ book.status }}
 {% if results %}
 <h2>Search Results</h2>
 
+{% if results %}
+<h2>Search Results</h2>
+
 {% for book in results %}
 <div class="card">
+
 <form action="/add" method="POST">
     <input type="hidden" name="user_key" value="{{ user_key }}">
     <input type="hidden" name="title" value="{{ book.title }}">
     <input type="hidden" name="author" value="{{ book.author }}">
     <input type="hidden" name="genre" value="{{ book.genre }}">
 
-    <p><strong>{{ book.title }}</strong></p>
+    <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
 
     {% if book.image %}
-        <img src="{{ book.image }}" width="100">
+        <img src="{{ book.image }}" width="120">
     {% endif %}
 
-    <br><br>
-    <button class="add-btn">Add</button>
+    <p style="font-size:12px; opacity:0.8;">
+        {{ book.description }}
+    </p>
+
+    <button class="add-btn">Add Book</button>
 </form>
+
 </div>
 {% endfor %}
 {% endif %}
