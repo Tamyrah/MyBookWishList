@@ -2,165 +2,72 @@
 <html>
 <head>
 <title>Leaflist</title>
-
 <style>
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    background: linear-gradient(135deg, #0f172a, #020617);
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%);
+    min-height: 100vh;
     color: white;
-    font-family: Arial;
+    font-family: 'Segoe UI', Arial, sans-serif;
     text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+    text-shadow: 0 0 20px rgba(250,204,21,0.4);
+}
+
+h1 span { color: #facc15; }
+
+p.subtitle {
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
 }
 
 .glass {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
-    padding: 20px;
-    margin: 20px auto;
-    width: 80%;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 22px 24px;
+    margin: 16px auto;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    text-align: left;
+}
+
+.glass-top {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 18px 24px;
+    margin: 12px auto;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 input, select {
-    padding: 8px;
-    margin: 5px;
-}
-
-button {
     padding: 8px 12px;
-    background: gold;
-    border: none;
-    cursor: pointer;
-}
-
-/* FIXED FILTER VISIBILITY */
-a {
+    margin: 5px 4px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
     color: white;
-    font-weight: bold;
-    margin: 0 10px;
-    text-decoration: none;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border 0.2s;
 }
 
-.row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* STATUS COLORS */
-.want { color: #60a5fa; }
-.reading { color: #facc15; }
-.finished { color: #34d399; }
-
-</style>
-</head>
-
-<body>
-
-<h1>🌿 Leaflist</h1>
-<p>Your personal reading queue</p>
-
-<!-- SEARCH (FIXED) -->
-<form method="GET" action="/">
-    <input type="hidden" name="user" value="{{ user }}">
-    <input name="query" placeholder="Search books">
-    <button type="submit">Search</button>
-</form>
-
-<!-- FILTER (VISIBLE NOW) -->
-<div>
-    <a href="/?user={{user}}">All</a>
-    <a href="/?user={{user}}&status=Want to Read">Want to Read</a>
-    <a href="/?user={{user}}&status=Reading">Reading</a>
-    <a href="/?user={{user}}&status=Finished">Finished</a>
-</div>
-
-<hr>
-
-<!-- ADD -->
-<form method="POST">
-    <input name="title" placeholder="Title" required>
-    <input name="author" placeholder="Author">
-    <input name="genre" placeholder="Genre">
-
-    <select name="priority">
-        <option>1</option>
-        <option>2</option>
-        <option>3</option>
-    </select>
-
-    <select name="status">
-        <option>Want to Read</option>
-        <option>Reading</option>
-        <option>Finished</option>
-    </select>
-
-    <button type="submit">Add Book</button>
-</form>
-
-<h2>Your Books</h2>
-
-{% for book in books %}
-<div class="glass">
-
-<h3>{{ book.title }}</h3>
-<p>{{ book.author }}</p>
-<p>{{ book.genre }}</p>
-<p>Priority: {{ book.priority }}</p>
-
-<p>
-Status:
-<span class="
-{% if book.status == 'Want to Read' %}want
-{% elif book.status == 'Reading' %}reading
-{% else %}finished{% endif %}
-">
-{{ book.status }}
-</span>
-</p>
-
-<!-- UPDATE -->
-<form method="POST" action="/update">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user }}">
-
-<div class="row">
-<input name="title" value="{{ book.title }}">
-<input name="author" value="{{ book.author }}">
-<input name="genre" value="{{ book.genre }}">
-
-<select name="priority">
-<option {% if book.priority == 1 %}selected{% endif %}>1</option>
-<option {% if book.priority == 2 %}selected{% endif %}>2</option>
-<option {% if book.priority == 3 %}selected{% endif %}>3</option>
-</select>
-
-<select name="status">
-<option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
-<option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
-<option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
-</select>
-</div>
-
-<div class="row">
-<button type="submit">Update</button>
-</form>
-
-<!-- DELETE (FIXED) -->
-<form method="POST" action="/delete">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user }}">
-<button type="submit">Remove</button>
-</form>
-
-</div>
-
-</div>
-{% endfor %}
-
-<footer>
-<p>© 2026 Greenleigh Lane. All rights reserved.</p>
-</footer>
-
-</body>
-</html>
+input::placeholder { color: rgba(255,25
