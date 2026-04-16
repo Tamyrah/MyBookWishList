@@ -37,6 +37,10 @@ button {
 .remove-btn { background:#ef4444; }
 .update-btn { background:#facc15; }
 
+.status-reading { color:#facc15; }
+.status-finished { color:#22c55e; }
+.status-want { color:#60a5fa; }
+
 .filter-bar button {
     background:#1f2937;
     color:white;
@@ -47,6 +51,11 @@ button {
     margin:20px 0;
     padding:15px;
     border-bottom:1px solid #333;
+}
+
+img {
+    margin-top:10px;
+    border-radius:6px;
 }
 </style>
 </head>
@@ -76,11 +85,7 @@ button {
     <input name="genre" placeholder="Genre">
 
     <select name="priority">
-        <option value="1">1</option>
-        <option value="2">2</option>
         <option value="3" selected>3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
     </select>
 
     <select name="status">
@@ -110,8 +115,14 @@ button {
 <h3>{{ book.title }}</h3>
 <p>{{ book.author }}</p>
 <p>{{ book.genre }}</p>
-<p>Priority: {{ book.priority }}</p>
-<p>Status: {{ book.status }}</p>
+
+<p class="
+{% if book.status == 'Reading' %}status-reading{% endif %}
+{% if book.status == 'Finished' %}status-finished{% endif %}
+{% if book.status == 'Want to Read' %}status-want{% endif %}
+">
+Status: {{ book.status }}
+</p>
 
 <!-- REMOVE -->
 <form action="/remove" method="POST">
@@ -128,18 +139,10 @@ button {
     <input name="author" value="{{ book.author }}">
     <input name="genre" value="{{ book.genre }}">
 
-    <select name="priority">
-        <option value="1" {% if book.priority==1 %}selected{% endif %}>1</option>
-        <option value="2" {% if book.priority==2 %}selected{% endif %}>2</option>
-        <option value="3" {% if book.priority==3 %}selected{% endif %}>3</option>
-        <option value="4" {% if book.priority==4 %}selected{% endif %}>4</option>
-        <option value="5" {% if book.priority==5 %}selected{% endif %}>5</option>
-    </select>
-
     <select name="status">
-        <option value="Want to Read" {% if book.status=="Want to Read" %}selected{% endif %}>Want to Read</option>
-        <option value="Reading" {% if book.status=="Reading" %}selected{% endif %}>Reading</option>
-        <option value="Finished" {% if book.status=="Finished" %}selected{% endif %}>Finished</option>
+        <option value="Want to Read">Want to Read</option>
+        <option value="Reading">Reading</option>
+        <option value="Finished">Finished</option>
     </select>
 
     <button class="update-btn">Update</button>
@@ -148,7 +151,7 @@ button {
 </div>
 {% endfor %}
 
-<!-- SEARCH RESULTS -->
+<!-- SEARCH RESULTS WITH IMAGES -->
 {% if results %}
 <h2>Search Results</h2>
 
@@ -160,8 +163,14 @@ button {
     <input type="hidden" name="author" value="{{ book.author }}">
     <input type="hidden" name="genre" value="{{ book.genre }}">
 
-    <p>{{ book.title }} - {{ book.author }}</p>
+    <p><strong>{{ book.title }}</strong></p>
+    <p>{{ book.author }}</p>
 
+    {% if book.image %}
+        <img src="{{ book.image }}" width="100">
+    {% endif %}
+
+    <br><br>
     <button class="add-btn">Add</button>
 </form>
 </div>
