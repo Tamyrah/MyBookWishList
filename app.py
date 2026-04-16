@@ -82,19 +82,24 @@ def search():
 
         if "items" in response:
             for item in response["items"][:8]:
-                info = item["volumeInfo"]
+                info = item.get("volumeInfo", {})
+
+                title = info.get("title", "")
+                authors = info.get("authors", ["Unknown"])
+                categories = info.get("categories", [""])
 
                 image = ""
                 if "imageLinks" in info:
                     image = info["imageLinks"].get("thumbnail", "")
 
-                description = info.get("description", "")
-                description = description[:200] + "..." if description else "No description available."
+                description = info.get("description", "No description available.")
+                if description:
+                    description = description[:200] + "..."
 
                 results.append({
-                    "title": info.get("title", ""),
-                    "author": ", ".join(info.get("authors", ["Unknown"])),
-                    "genre": ", ".join(info.get("categories", [""])),
+                    "title": title,
+                    "author": ", ".join(authors),
+                    "genre": ", ".join(categories),
                     "image": image,
                     "description": description
                 })
