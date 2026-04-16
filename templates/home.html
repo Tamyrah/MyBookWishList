@@ -41,10 +41,21 @@ button {
 .status-finished { color:#22c55e; }
 .status-want { color:#60a5fa; }
 
+.filter-bar button {
+    background:#1f2937;
+    color:white;
+    margin:3px;
+}
+
 .card {
     margin:20px 0;
     padding:15px;
     border-bottom:1px solid #333;
+}
+
+img {
+    margin-top:10px;
+    border-radius:6px;
 }
 </style>
 </head>
@@ -63,70 +74,7 @@ button {
     <button type="submit" class="search-btn">Search</button>
 </form>
 
-<hr>
-
-<!-- ADD -->
-<form action="/add" method="POST">
-    <input type="hidden" name="user_key" value="{{ user_key }}">
-
-    <input name="title" placeholder="Title" required>
-    <input name="author" placeholder="Author">
-    <input name="genre" placeholder="Genre">
-
-    <select name="priority">
-        <option value="3" selected>3</option>
-    </select>
-
-    <select name="status">
-        <option value="Want to Read">Want to Read</option>
-        <option value="Reading">Reading</option>
-        <option value="Finished">Finished</option>
-    </select>
-
-    <button class="add-btn">Add Book</button>
-</form>
-
-<hr>
-
-<h2>Your Books</h2>
-
-{% for book in books %}
-<div class="card">
-
-<h3>{{ book.title }}</h3>
-<p>{{ book.author }}</p>
-<p>{{ book.genre }}</p>
-
-<p class="{% if book.status == 'Reading' %}status-reading{% elif book.status == 'Finished' %}status-finished{% else %}status-want{% endif %}">
-Status: {{ book.status }}
-</p>
-
-<form action="/remove" method="POST">
-    <input type="hidden" name="user_key" value="{{ user_key }}">
-    <input type="hidden" name="book_id" value="{{ book.id }}">
-    <button class="remove-btn">Remove</button>
-</form>
-
-<form action="/update" method="POST">
-    <input type="hidden" name="user_key" value="{{ user_key }}">
-    <input type="hidden" name="book_id" value="{{ book.id }}">
-
-    <input name="author" value="{{ book.author }}">
-    <input name="genre" value="{{ book.genre }}">
-
-    <select name="status">
-        <option value="Want to Read">Want to Read</option>
-        <option value="Reading">Reading</option>
-        <option value="Finished">Finished</option>
-    </select>
-
-    <button class="update-btn">Update</button>
-</form>
-
-</div>
-{% endfor %}
-
-<!-- SEARCH RESULTS -->
+<!-- SEARCH RESULTS (NOW AT TOP) -->
 {% if results %}
 <h2>Search Results</h2>
 
@@ -138,6 +86,8 @@ Status: {{ book.status }}
     <input type="hidden" name="title" value="{{ book.title }}">
     <input type="hidden" name="author" value="{{ book.author }}">
     <input type="hidden" name="genre" value="{{ book.genre }}">
+    <input type="hidden" name="priority" value="3">
+    <input type="hidden" name="status" value="Want to Read">
 
     <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
@@ -146,7 +96,9 @@ Status: {{ book.status }}
         <img src="{{ book.image }}" width="120">
     {% endif %}
 
-    <p style="font-size:12px;">{{ book.description }}</p>
+    <p style="font-size:12px; opacity:0.8;">
+        {{ book.description }}
+    </p>
 
     <button class="add-btn">Add Book</button>
 </form>
@@ -155,7 +107,107 @@ Status: {{ book.status }}
 {% endfor %}
 {% endif %}
 
+<hr>
+
+<!-- ADD MANUALLY -->
+<form action="/add" method="POST">
+    <input type="hidden" name="user_key" value="{{ user_key }}">
+
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
+
+    <select name="priority">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select>
+
+    <select name="status">
+        <option value="Want to Read">Want to Read</option>
+        <option value="Reading">Reading</option>
+        <option value="Finished">Finished</option>
+    </select>
+
+    <button class="add-btn">Add Book</button>
+</form>
+
+<hr>
+
+<!-- FILTERS -->
+<div class="filter-bar">
+<button onclick="filterBooks('all')">All</button>
+<button onclick="filterBooks('Want to Read')">Want to Read</button>
+<button onclick="filterBooks('Reading')">Reading</button>
+<button onclick="filterBooks('Finished')">Finished</button>
 </div>
+
+<h2>Your Books</h2>
+
+{% for book in books %}
+<div class="card book" data-status="{{ book.status }}">
+
+<h3>{{ book.title }}</h3>
+<p>{{ book.author }}</p>
+<p>{{ book.genre }}</p>
+<p>Priority: {{ book.priority }}</p>
+
+<p class="{% if book.status == 'Reading' %}status-reading{% elif book.status == 'Finished' %}status-finished{% else %}status-want{% endif %}">
+Status: {{ book.status }}
+</p>
+
+<!-- REMOVE -->
+<form action="/remove" method="POST">
+    <input type="hidden" name="user_key" value="{{ user_key }}">
+    <input type="hidden" name="book_id" value="{{ book.id }}">
+    <button class="remove-btn">Remove</button>
+</form>
+
+<!-- UPDATE -->
+<form action="/update" method="POST">
+    <input type="hidden" name="user_key" value="{{ user_key }}">
+    <input type="hidden" name="book_id" value="{{ book.id }}">
+
+    <input name="author" value="{{ book.author }}">
+    <input name="genre" value="{{ book.genre }}">
+
+    <select name="priority">
+        <option value="1" {% if book.priority==1 %}selected{% endif %}>1</option>
+        <option value="2" {% if book.priority==2 %}selected{% endif %}>2</option>
+        <option value="3" {% if book.priority==3 %}selected{% endif %}>3</option>
+        <option value="4" {% if book.priority==4 %}selected{% endif %}>4</option>
+        <option value="5" {% if book.priority==5 %}selected{% endif %}>5</option>
+    </select>
+
+    <select name="status">
+        <option value="Want to Read" {% if book.status=="Want to Read" %}selected{% endif %}>Want to Read</option>
+        <option value="Reading" {% if book.status=="Reading" %}selected{% endif %}>Reading</option>
+        <option value="Finished" {% if book.status=="Finished" %}selected{% endif %}>Finished</option>
+    </select>
+
+    <button class="update-btn">Update</button>
+</form>
+
+</div>
+{% endfor %}
+
+</div>
+
+<script>
+function filterBooks(status) {
+    let books = document.querySelectorAll(".book");
+
+    books.forEach(book => {
+        if (status === "all" || book.dataset.status === status) {
+            book.style.display = "block";
+        } else {
+            book.style.display = "none";
+        }
+    });
+}
+</script>
 
 </body>
 </html>
