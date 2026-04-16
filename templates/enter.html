@@ -1,28 +1,17 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Leaflist</title>
-</head>
-
 <body style="text-align:center;">
 
 <h2>Welcome to Leaflist 🌿</h2>
-<p>Enter your name to continue:</p>
 
-<input id="userInput" placeholder="Your name">
-<button onclick="start()">Enter</button>
+<input id="userInput" placeholder="Enter name">
+<button onclick="go()">Enter</button>
 
 <script>
-function start() {
-    let user = document.getElementById("userInput").value;
-
-    if (!user) {
-        alert("Please enter your name");
-        return;
-    }
-
-    localStorage.setItem("leaflist_user", user);
-    window.location.href = "/?user=" + user;
+function go() {
+    let u = document.getElementById("userInput").value;
+    localStorage.setItem("leaflist_user", u);
+    window.location.href = "/?user=" + u;
 }
 
 window.onload = function() {
