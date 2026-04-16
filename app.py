@@ -25,7 +25,7 @@ def home():
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
 # -----------------------
-# ADD BOOK
+# ADD
 # -----------------------
 @app.route("/add", methods=["POST"])
 def add_book():
@@ -43,36 +43,38 @@ def add_book():
     return redirect(f"/?user={user_key}")
 
 # -----------------------
-# REMOVE BOOK
+# REMOVE
 # -----------------------
 @app.route("/remove", methods=["POST"])
 def remove_book():
     user_key = request.form.get("user_key")
     book_id = request.form.get("book_id")
 
-    supabase.table("books").delete().eq("id", book_id).execute()
+    if book_id:
+        supabase.table("books").delete().eq("id", book_id).execute()
 
     return redirect(f"/?user={user_key}")
 
 # -----------------------
-# UPDATE BOOK
+# UPDATE
 # -----------------------
 @app.route("/update", methods=["POST"])
 def update_book():
     user_key = request.form.get("user_key")
     book_id = request.form.get("book_id")
 
-    supabase.table("books").update({
-        "author": request.form.get("author"),
-        "genre": request.form.get("genre"),
-        "priority": int(request.form.get("priority")),
-        "status": request.form.get("status")
-    }).eq("id", book_id).execute()
+    if book_id:
+        supabase.table("books").update({
+            "author": request.form.get("author"),
+            "genre": request.form.get("genre"),
+            "priority": int(request.form.get("priority")),
+            "status": request.form.get("status")
+        }).eq("id", book_id).execute()
 
     return redirect(f"/?user={user_key}")
 
 # -----------------------
-# SEARCH
+# SEARCH (WITH COVER IMAGES)
 # -----------------------
 @app.route("/search")
 def search():
@@ -80,7 +82,6 @@ def search():
     query = request.args.get("query")
 
     books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
-
     results = []
 
     if query and query.strip() != "":
@@ -88,12 +89,18 @@ def search():
         response = requests.get(url).json()
 
         if "items" in response:
-            for item in response["items"][:5]:
+            for item in response["items"][:8]:
                 info = item["volumeInfo"]
+
+                image = ""
+                if "imageLinks" in info:
+                    image = info["imageLinks"].get("thumbnail", "")
+
                 results.append({
                     "title": info.get("title", ""),
                     "author": ", ".join(info.get("authors", ["Unknown"])),
-                    "genre": ", ".join(info.get("categories", [""]))
+                    "genre": ", ".join(info.get("categories", [""])),
+                    "image": image
                 })
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
