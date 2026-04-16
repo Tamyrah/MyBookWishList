@@ -2,18 +2,19 @@ from flask import Flask, render_template, request, redirect
 from supabase import create_client
 import os
 
-app = Flask(**name**)
+app = Flask(__name__)
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# Get environment variables safely
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+# Fail loudly if missing (prevents silent crashes)
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("Missing Supabase environment variables")
+
+# Create Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-user = request.args.get("user")
-
-```
 if not user:
     return render_template("enter.html")
 
