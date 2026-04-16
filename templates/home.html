@@ -1,171 +1,140 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-<title>Leaflist</title>
+    <title>Leaflist</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #020617);
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
 
-<style>
-body {
-    background: linear-gradient(135deg, #0d1b2a, #1b263b);
-    color: white;
-    text-align: center;
-    font-family: Arial;
-}
+        .glass {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin: 20px auto;
+            width: 80%;
+            border-radius: 12px;
+        }
 
-.container {
-    width: 80%;
-    margin: auto;
-}
+        input, select {
+            padding: 8px;
+            margin: 5px;
+        }
 
-.glass {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 10px;
-}
+        button {
+            padding: 8px 12px;
+            background: gold;
+            border: none;
+            cursor: pointer;
+        }
 
-input, select {
-    padding: 6px;
-    margin: 5px;
-}
-
-button {
-    padding: 6px 10px;
-    margin: 3px;
-    background-color: gold;
-    border: none;
-}
-
-.filters {
-    margin: 15px 0;
-}
-
-.filters button {
-    background: transparent;
-    color: white;
-}
-
-.filters button:not(:last-child)::after {
-    content: "|";
-    margin-left: 10px;
-    color: gray;
-}
-</style>
-
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
 </head>
 
 <body>
-
-<div class="container">
 
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
 
 <!-- SEARCH -->
-
-<form method="GET">
+<form method="GET" action="/">
     <input type="hidden" name="user" value="{{ user }}">
-    <input type="text" name="query" placeholder="Search books">
+    <input name="query" placeholder="Search books">
     <button type="submit">Search</button>
 </form>
 
 <!-- FILTER -->
-
-<div class="filters">
-    <a href="/?user={{ user }}"><button>All</button></a>
-    <a href="/?user={{ user }}&status=Want to Read"><button>Want to Read</button></a>
-    <a href="/?user={{ user }}&status=Reading"><button>Reading</button></a>
-    <a href="/?user={{ user }}&status=Finished"><button>Finished</button></a>
+<div>
+    <a href="/?user={{user}}">All</a> |
+    <a href="/?user={{user}}&status=Want to Read">Want to Read</a> |
+    <a href="/?user={{user}}&status=Reading">Reading</a> |
+    <a href="/?user={{user}}&status=Finished">Finished</a>
 </div>
 
-<!-- ADD -->
+<hr>
 
-<div class="glass">
+<!-- ADD BOOK -->
 <form method="POST">
-<input type="hidden" name="user" value="{{ user }}">
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
 
-<input name="title" placeholder="Title" required>
-<input name="author" placeholder="Author">
-<input name="genre" placeholder="Genre">
+    <select name="priority">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+    </select>
 
-<select name="priority">
-<option>1</option><option>2</option><option>3</option><option>4</option>
-</select>
+    <select name="status">
+        <option>Want to Read</option>
+        <option>Reading</option>
+        <option>Finished</option>
+    </select>
 
-<select name="status">
-<option>Want to Read</option>
-<option>Reading</option>
-<option>Finished</option>
-</select>
-
-<button type="submit">Add Book</button>
-
+    <button type="submit">Add Book</button>
 </form>
-</div>
 
 <h2>Your Books</h2>
 
 {% for book in books %}
-
 <div class="glass">
 
-<h3>{{ book.title }}</h3>
-<p>{{ book.author }}</p>
-<p>{{ book.genre }}</p>
-<p>Priority: {{ book.priority }}</p>
+    <h3>{{ book.title }}</h3>
+    <p>{{ book.author }}</p>
+    <p>{{ book.genre }}</p>
+    <p>Priority: {{ book.priority }}</p>
+    <p>Status: {{ book.status }}</p>
 
-<p>Status:
-<span style="
-color:
-{% if book.status == 'Want to Read' %}#4da6ff
-{% elif book.status == 'Reading' %}#4CAF50
-{% else %}#ffcc00
-{% endif %}
-">
-{{ book.status }}
-</span>
-</p>
+    <!-- UPDATE -->
+    <form method="POST" action="/update">
+        <input type="hidden" name="id" value="{{ book.id }}">
+        <input type="hidden" name="user" value="{{ user }}">
 
-<form method="POST" action="/update">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user }}">
+        <div class="row">
+            <input name="title" value="{{ book.title }}">
+            <input name="author" value="{{ book.author }}">
+            <input name="genre" value="{{ book.genre }}">
 
-<input name="title" value="{{ book.title }}">
-<input name="author" value="{{ book.author }}">
-<input name="genre" value="{{ book.genre }}">
+            <select name="priority">
+                <option {% if book.priority == 1 %}selected{% endif %}>1</option>
+                <option {% if book.priority == 2 %}selected{% endif %}>2</option>
+                <option {% if book.priority == 3 %}selected{% endif %}>3</option>
+            </select>
 
-<select name="priority">
-<option {% if book.priority == 1 %}selected{% endif %}>1</option>
-<option {% if book.priority == 2 %}selected{% endif %}>2</option>
-<option {% if book.priority == 3 %}selected{% endif %}>3</option>
-<option {% if book.priority == 4 %}selected{% endif %}>4</option>
-</select>
+            <select name="status">
+                <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
+                <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
+                <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
+            </select>
+        </div>
 
-<select name="status">
-<option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
-<option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
-<option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
-</select>
+        <div class="row">
+            <button type="submit">Update</button>
+    </form>
 
-<br><br>
-
-<button type="submit">Update</button>
-
-</form>
-
-<form method="POST" action="/delete">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user }}">
-<button type="submit">Remove</button>
-</form>
+    <!-- DELETE -->
+    <form method="POST" action="/delete">
+        <input type="hidden" name="id" value="{{ book.id }}">
+        <input type="hidden" name="user" value="{{ user }}">
+        <button type="submit">Remove</button>
+    </form>
+        </div>
 
 </div>
 {% endfor %}
 
-<p>© 2026 Greenleigh Lane. All rights reserved.</p>
-
-</div>
+<footer>
+    <p>© 2026 Greenleigh Lane. All rights reserved.</p>
+</footer>
 
 </body>
 </html>
