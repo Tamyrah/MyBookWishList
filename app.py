@@ -1,88 +1,106 @@
 from flask import Flask, render_template, request, redirect
 import requests
 import os
+from supabase import create_client
 
 app = Flask(__name__)
 
-wishlist = []
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# HOME + FILTER
-@app.route("/", methods=["GET"])
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# -----------------------
+# HOME
+# -----------------------
+@app.route("/")
 def home():
-    filter_status = request.args.get("filter")
+    user_key = request.args.get("user")
 
-    if filter_status and filter_status != "All":
-        filtered_list = [book for book in wishlist if book["status"] == filter_status]
-    else:
-        filtered_list = wishlist
+    # FORCE prompt if no valid user
+    if not user_key or user_key == "None":
+        return render_template("enter.html")
 
-    return render_template("home.html", wishlist=filtered_list)
+    response = supabase.table("books").select("*").eq("user_id", user_key).execute()
+    books = response.data if response.data else []
 
+    return render_template("home.html", books=books, user_key=user_key)
+
+# -----------------------
 # ADD BOOK
+# -----------------------
 @app.route("/add", methods=["POST"])
 def add_book():
-    new_book = {
+    user_key = request.form.get("user_key")
+
+    supabase.table("books").insert({
+        "user_id": user_key,
         "title": request.form.get("title"),
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
-        "priority": request.form.get("priority"),
+        "priority": int(request.form.get("priority")),
         "status": request.form.get("status")
-    }
+    }).execute()
 
-    wishlist.append(new_book)
-    return redirect("/")
+    return redirect(f"/?user={user_key}")
 
-# REMOVE
+# -----------------------
+# REMOVE BOOK
+# -----------------------
 @app.route("/remove", methods=["POST"])
 def remove_book():
-    global wishlist
+    user_key = request.form.get("user_key")
     title = request.form.get("title")
 
-    wishlist = [book for book in wishlist if book["title"] != title]
-    return redirect("/")
+    supabase.table("books").delete().eq("title", title).eq("user_id", user_key).execute()
 
-# EDIT
-@app.route("/edit", methods=["POST"])
-def edit_book():
-    original_title = request.form.get("original_title")
+    return redirect(f"/?user={user_key}")
 
-    for book in wishlist:
-        if book["title"] == original_title:
-            book["title"] = request.form.get("title")
-            book["author"] = request.form.get("author")
-            book["genre"] = request.form.get("genre")
-            book["priority"] = request.form.get("priority")
-            book["status"] = request.form.get("status")
+# -----------------------
+# UPDATE BOOK
+# -----------------------
+@app.route("/update", methods=["POST"])
+def update_book():
+    user_key = request.form.get("user_key")
+    title = request.form.get("title")
 
-    return redirect("/")
+    supabase.table("books").update({
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": int(request.form.get("priority")),
+        "status": request.form.get("status")
+    }).eq("title", title).eq("user_id", user_key).execute()
 
+    return redirect(f"/?user={user_key}")
+
+# -----------------------
 # SEARCH
-@app.route("/search", methods=["GET"])
+# -----------------------
+@app.route("/search")
 def search():
+    user_key = request.args.get("user")
     query = request.args.get("query")
 
-    if not query:
+    if not user_key or user_key == "None":
         return redirect("/")
 
-    api_key = os.getenv("GOOGLE_BOOKS_API_KEY")
-
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&key={api_key}"
-    response = requests.get(url)
-    data = response.json()
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
+    response = requests.get(url).json()
 
     results = []
 
-    if "items" in data:
-        for item in data["items"][:5]:
+    if "items" in response:
+        for item in response["items"][:5]:
             info = item["volumeInfo"]
-
             results.append({
-                "title": info.get("title", "N/A"),
+                "title": info.get("title", ""),
                 "author": ", ".join(info.get("authors", ["Unknown"])),
-                "genre": ", ".join(info.get("categories", ["N/A"]))
+                "genre": ", ".join(info.get("categories", [""]))
             })
 
-    return render_template("home.html", wishlist=wishlist, search_results=results)
+    db_books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
+
+    return render_template("home.html", books=db_books, results=results, user_key=user_key)
 
 if __name__ == "__main__":
     app.run(debug=True)
