@@ -49,14 +49,14 @@ response = query.order("id", desc=True).execute()
 books = response.data if response.data else []
 
 return render_template("home.html", books=books, user=user)
-```
+
 
 @app.route("/update", methods=["POST"])
 def update():
 book_id = request.form.get("id")
 user = request.form.get("user")
 
-```
+
 supabase.table("books").update({
     "title": request.form.get("title"),
     "author": request.form.get("author"),
@@ -66,18 +66,18 @@ supabase.table("books").update({
 }).eq("id", book_id).execute()
 
 return redirect(f"/?user={user}")
-```
+
 
 @app.route("/delete", methods=["POST"])
 def delete():
 book_id = request.form.get("id")
 user = request.form.get("user")
 
-```
+
 supabase.table("books").delete().eq("id", book_id).execute()
 
 return redirect(f"/?user={user}")
-```
+
 
 @app.route("/enter", methods=["GET", "POST"])
 def enter():
@@ -85,9 +85,9 @@ if request.method == "POST":
 user = request.form.get("user")
 return redirect(f"/?user={user}")
 
-```
+
 return render_template("enter.html")
-```
+
 
 if **name** == "**main**":
 app.run(debug=True)
