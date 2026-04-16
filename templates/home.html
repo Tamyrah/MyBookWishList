@@ -1,43 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflist</title>
-    <style>
-        body {
-            background: linear-gradient(135deg, #0f172a, #020617);
-            color: white;
-            font-family: Arial;
-            text-align: center;
-        }
+<title>Leaflist</title>
 
-        .glass {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            margin: 20px auto;
-            width: 80%;
-            border-radius: 12px;
-        }
+<style>
+body {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: white;
+    font-family: Arial;
+    text-align: center;
+}
 
-        input, select {
-            padding: 8px;
-            margin: 5px;
-        }
+.glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    margin: 20px auto;
+    width: 80%;
+    border-radius: 12px;
+}
 
-        button {
-            padding: 8px 12px;
-            background: gold;
-            border: none;
-            cursor: pointer;
-        }
+input, select {
+    padding: 8px;
+    margin: 5px;
+}
 
-        .row {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-    </style>
+button {
+    padding: 8px 12px;
+    background: gold;
+    border: none;
+    cursor: pointer;
+}
+
+/* FIXED FILTER VISIBILITY */
+a {
+    color: white;
+    font-weight: bold;
+    margin: 0 10px;
+    text-decoration: none;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* STATUS COLORS */
+.want { color: #60a5fa; }
+.reading { color: #facc15; }
+.finished { color: #34d399; }
+
+</style>
 </head>
 
 <body>
@@ -45,33 +60,33 @@
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
 
-<!-- SEARCH -->
+<!-- SEARCH (FIXED) -->
 <form method="GET" action="/">
     <input type="hidden" name="user" value="{{ user }}">
     <input name="query" placeholder="Search books">
     <button type="submit">Search</button>
 </form>
 
-<!-- FILTER -->
+<!-- FILTER (VISIBLE NOW) -->
 <div>
-    <a href="/?user={{user}}">All</a> |
-    <a href="/?user={{user}}&status=Want to Read">Want to Read</a> |
-    <a href="/?user={{user}}&status=Reading">Reading</a> |
+    <a href="/?user={{user}}">All</a>
+    <a href="/?user={{user}}&status=Want to Read">Want to Read</a>
+    <a href="/?user={{user}}&status=Reading">Reading</a>
     <a href="/?user={{user}}&status=Finished">Finished</a>
 </div>
 
 <hr>
 
-<!-- ADD BOOK -->
+<!-- ADD -->
 <form method="POST">
     <input name="title" placeholder="Title" required>
     <input name="author" placeholder="Author">
     <input name="genre" placeholder="Genre">
 
     <select name="priority">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
     </select>
 
     <select name="status">
@@ -88,52 +103,63 @@
 {% for book in books %}
 <div class="glass">
 
-    <h3>{{ book.title }}</h3>
-    <p>{{ book.author }}</p>
-    <p>{{ book.genre }}</p>
-    <p>Priority: {{ book.priority }}</p>
-    <p>Status: {{ book.status }}</p>
+<h3>{{ book.title }}</h3>
+<p>{{ book.author }}</p>
+<p>{{ book.genre }}</p>
+<p>Priority: {{ book.priority }}</p>
 
-    <!-- UPDATE -->
-    <form method="POST" action="/update">
-        <input type="hidden" name="id" value="{{ book.id }}">
-        <input type="hidden" name="user" value="{{ user }}">
+<p>
+Status:
+<span class="
+{% if book.status == 'Want to Read' %}want
+{% elif book.status == 'Reading' %}reading
+{% else %}finished{% endif %}
+">
+{{ book.status }}
+</span>
+</p>
 
-        <div class="row">
-            <input name="title" value="{{ book.title }}">
-            <input name="author" value="{{ book.author }}">
-            <input name="genre" value="{{ book.genre }}">
+<!-- UPDATE -->
+<form method="POST" action="/update">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user }}">
 
-            <select name="priority">
-                <option {% if book.priority == 1 %}selected{% endif %}>1</option>
-                <option {% if book.priority == 2 %}selected{% endif %}>2</option>
-                <option {% if book.priority == 3 %}selected{% endif %}>3</option>
-            </select>
+<div class="row">
+<input name="title" value="{{ book.title }}">
+<input name="author" value="{{ book.author }}">
+<input name="genre" value="{{ book.genre }}">
 
-            <select name="status">
-                <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
-                <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
-                <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
-            </select>
-        </div>
+<select name="priority">
+<option {% if book.priority == 1 %}selected{% endif %}>1</option>
+<option {% if book.priority == 2 %}selected{% endif %}>2</option>
+<option {% if book.priority == 3 %}selected{% endif %}>3</option>
+</select>
 
-        <div class="row">
-            <button type="submit">Update</button>
-    </form>
+<select name="status">
+<option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
+<option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
+<option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
+</select>
+</div>
 
-    <!-- DELETE -->
-    <form method="POST" action="/delete">
-        <input type="hidden" name="id" value="{{ book.id }}">
-        <input type="hidden" name="user" value="{{ user }}">
-        <button type="submit">Remove</button>
-    </form>
-        </div>
+<div class="row">
+<button type="submit">Update</button>
+</form>
+
+<!-- DELETE (FIXED) -->
+<form method="POST" action="/delete">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user }}">
+<button type="submit">Remove</button>
+</form>
+
+</div>
 
 </div>
 {% endfor %}
 
 <footer>
-    <p>© 2026 Greenleigh Lane. All rights reserved.</p>
+<p>© 2026 Greenleigh Lane. All rights reserved.</p>
 </footer>
 
 </body>
