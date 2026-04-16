@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html>
-<body style="text-align:center;">
+<head>
+    <title>Leaflist</title>
+</head>
+<body style="text-align:center; margin-top:100px; font-family:sans-serif;">
 
-<h2>Welcome to Leaflist 🌿</h2>
+    <h1>Welcome to Leaflist 🌿</h1>
 
-<input id="userInput" placeholder="Enter name">
-<button onclick="go()">Enter</button>
-
-<script>
-function go() {
-    let u = document.getElementById("userInput").value;
-    localStorage.setItem("leaflist_user", u);
-    window.location.href = "/?user=" + u;
-}
-
-window.onload = function() {
-    let saved = localStorage.getItem("leaflist_user");
-    if (saved) {
-        window.location.href = "/?user=" + saved;
-    }
-}
-</script>
+    <form action="/home" method="GET">
+        <input type="text" name="user" placeholder="Enter name" required>
+        <button type="submit">Enter</button>
+    </form>
 
 </body>
 </html>
