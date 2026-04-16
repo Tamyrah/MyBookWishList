@@ -4,21 +4,16 @@ import os
 
 app = Flask(__name__)
 
-# =========================
-# SUPABASE SETUP
-# =========================
+# ENV
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Missing Supabase environment variables")
+    raise ValueError("Missing Supabase credentials")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# =========================
-# HOME ROUTE
-# =========================
 @app.route("/", methods=["GET", "POST"])
 def home():
     user = request.args.get("user")
@@ -32,14 +27,14 @@ def home():
             "title": request.form.get("title"),
             "author": request.form.get("author"),
             "genre": request.form.get("genre"),
-            "priority": request.form.get("priority"),
+            "priority": int(request.form.get("priority")),
             "status": request.form.get("status"),
             "user_id": user
         }).execute()
 
         return redirect(f"/?user={user}")
 
-    # FETCH BOOKS
+    # BASE QUERY
     query = supabase.table("books").select("*").eq("user_id", user)
 
     # FILTER
@@ -47,7 +42,7 @@ def home():
     if status:
         query = query.eq("status", status)
 
-    # SEARCH
+    # SEARCH (FIXED)
     search = request.args.get("query")
     if search:
         query = query.ilike("title", f"%{search}%")
@@ -58,9 +53,7 @@ def home():
     return render_template("home.html", books=books, user=user)
 
 
-# =========================
-# UPDATE BOOK
-# =========================
+# UPDATE
 @app.route("/update", methods=["POST"])
 def update():
     book_id = request.form.get("id")
@@ -70,16 +63,14 @@ def update():
         "title": request.form.get("title"),
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
-        "priority": request.form.get("priority"),
-        "status": request.form.get("status"),
+        "priority": int(request.form.get("priority")),
+        "status": request.form.get("status")
     }).eq("id", book_id).execute()
 
     return redirect(f"/?user={user}")
 
 
-# =========================
-# DELETE BOOK
-# =========================
+# DELETE (FIXED)
 @app.route("/delete", methods=["POST"])
 def delete():
     book_id = request.form.get("id")
@@ -90,9 +81,7 @@ def delete():
     return redirect(f"/?user={user}")
 
 
-# =========================
-# ENTER USER
-# =========================
+# ENTER PAGE
 @app.route("/enter", methods=["GET", "POST"])
 def enter():
     if request.method == "POST":
@@ -102,8 +91,5 @@ def enter():
     return render_template("enter.html")
 
 
-# =========================
-# LOCAL RUN (SAFE FOR RENDER)
-# =========================
 if __name__ == "__main__":
     app.run(debug=True)
