@@ -1,10 +1,37 @@
 <!DOCTYPE html>
 <html>
-<body style="text-align:center; margin-top:100px;">
-<h2>Enter Your Name</h2>
-<form method="POST" action="/enter">
-<input name="user" required>
-<button type="submit">Continue</button>
-</form>
+<head>
+    <title>Leaflist</title>
+</head>
+
+<body style="text-align:center;">
+
+<h2>Welcome to Leaflist 🌿</h2>
+<p>Enter your name to continue:</p>
+
+<input id="userInput" placeholder="Your name">
+<button onclick="start()">Enter</button>
+
+<script>
+function start() {
+    let user = document.getElementById("userInput").value;
+
+    if (!user) {
+        alert("Please enter your name");
+        return;
+    }
+
+    localStorage.setItem("leaflist_user", user);
+    window.location.href = "/?user=" + user;
+}
+
+window.onload = function() {
+    let saved = localStorage.getItem("leaflist_user");
+    if (saved) {
+        window.location.href = "/?user=" + saved;
+    }
+}
+</script>
+
 </body>
 </html>
