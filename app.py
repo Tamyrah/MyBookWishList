@@ -1,106 +1,92 @@
 from flask import Flask, render_template, request, redirect
-import requests
-import os
 from supabase import create_client
+import os
 
 app = Flask(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# -----------------------
-# HOME
-# -----------------------
-@app.route("/")
-def home():
-    user_key = request.args.get("user")
 
-    # FORCE prompt if no valid user
-    if not user_key or user_key == "None":
+@app.route("/", methods=["GET", "POST"])
+def home():
+    user = request.args.get("user")
+
+    if not user:
         return render_template("enter.html")
 
-    response = supabase.table("books").select("*").eq("user_id", user_key).execute()
-    books = response.data if response.data else []
+    # ADD BOOK
+    if request.method == "POST":
+        title = request.form.get("title")
+        author = request.form.get("author")
+        genre = request.form.get("genre")
+        priority = int(request.form.get("priority"))
+        status = request.form.get("status")
 
-    return render_template("home.html", books=books, user_key=user_key)
+        supabase.table("books").insert({
+            "title": title,
+            "author": author,
+            "genre": genre,
+            "priority": priority,
+            "status": status,
+            "user_id": user
+        }).execute()
 
-# -----------------------
-# ADD BOOK
-# -----------------------
-@app.route("/add", methods=["POST"])
-def add_book():
-    user_key = request.form.get("user_key")
+        return redirect(f"/?user={user}")
 
-    supabase.table("books").insert({
-        "user_id": user_key,
+    # FILTER + SEARCH
+    query = request.args.get("query")
+    status_filter = request.args.get("status")
+
+    response = supabase.table("books").select("*").eq("user_id", user)
+
+    if status_filter:
+        response = response.eq("status", status_filter)
+
+    books = response.execute().data
+
+    if query:
+        books = [b for b in books if query.lower() in b["title"].lower()]
+
+    return render_template("home.html", books=books, user=user)
+
+
+# UPDATE BOOK
+@app.route("/update", methods=["POST"])
+def update():
+    user = request.form.get("user")
+    book_id = request.form.get("id")
+
+    supabase.table("books").update({
         "title": request.form.get("title"),
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
         "priority": int(request.form.get("priority")),
-        "status": request.form.get("status")
-    }).execute()
+        "status": request.form.get("status"),
+    }).eq("id", book_id).execute()
 
-    return redirect(f"/?user={user_key}")
+    return redirect(f"/?user={user}")
 
-# -----------------------
-# REMOVE BOOK
-# -----------------------
-@app.route("/remove", methods=["POST"])
-def remove_book():
-    user_key = request.form.get("user_key")
-    title = request.form.get("title")
 
-    supabase.table("books").delete().eq("title", title).eq("user_id", user_key).execute()
+# DELETE BOOK
+@app.route("/delete", methods=["POST"])
+def delete():
+    user = request.form.get("user")
+    book_id = request.form.get("id")
 
-    return redirect(f"/?user={user_key}")
+    supabase.table("books").delete().eq("id", book_id).execute()
 
-# -----------------------
-# UPDATE BOOK
-# -----------------------
-@app.route("/update", methods=["POST"])
-def update_book():
-    user_key = request.form.get("user_key")
-    title = request.form.get("title")
+    return redirect(f"/?user={user}")
 
-    supabase.table("books").update({
-        "author": request.form.get("author"),
-        "genre": request.form.get("genre"),
-        "priority": int(request.form.get("priority")),
-        "status": request.form.get("status")
-    }).eq("title", title).eq("user_id", user_key).execute()
 
-    return redirect(f"/?user={user_key}")
+# ENTER NAME
+@app.route("/enter", methods=["POST"])
+def enter():
+    name = request.form.get("name")
+    return redirect(f"/?user={name}")
 
-# -----------------------
-# SEARCH
-# -----------------------
-@app.route("/search")
-def search():
-    user_key = request.args.get("user")
-    query = request.args.get("query")
-
-    if not user_key or user_key == "None":
-        return redirect("/")
-
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-    response = requests.get(url).json()
-
-    results = []
-
-    if "items" in response:
-        for item in response["items"][:5]:
-            info = item["volumeInfo"]
-            results.append({
-                "title": info.get("title", ""),
-                "author": ", ".join(info.get("authors", ["Unknown"])),
-                "genre": ", ".join(info.get("categories", [""]))
-            })
-
-    db_books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
-
-    return render_template("home.html", books=db_books, results=results, user_key=user_key)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
