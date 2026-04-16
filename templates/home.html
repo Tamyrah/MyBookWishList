@@ -2,40 +2,44 @@
 <html>
 <head>
     <title>Leaflist</title>
+
     <style>
         body {
+            background-color: #0b132b;
+            color: white;
             font-family: Arial;
-            background-color: #f4f7f5;
             text-align: center;
         }
 
-        h1 {
-            margin-top: 20px;
+        input, select {
+            padding: 6px;
+            margin: 5px;
         }
 
-        .filters button {
-            margin: 5px;
-            padding: 8px 12px;
+        button {
+            padding: 6px 10px;
+            background: gold;
             border: none;
             cursor: pointer;
         }
 
-        .all { background-color: #ddd; }
-        .want { background-color: #4da6ff; color: white; }
-        .reading { background-color: #66cc66; color: white; }
-        .finished { background-color: #999; color: white; }
+        .filters button {
+            margin: 5px;
+        }
 
         .book {
-            background: white;
-            margin: 15px auto;
-            padding: 10px;
+            margin: 20px auto;
+            padding: 15px;
             width: 400px;
-            border-radius: 8px;
+            border-bottom: 1px solid gray;
         }
+
+        .want { color: #4da6ff; }
+        .reading { color: #66cc66; }
+        .finished { color: #cccccc; }
 
         footer {
             margin-top: 40px;
-            font-size: 12px;
             color: gray;
         }
     </style>
@@ -46,33 +50,35 @@
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
 
-<form method="GET">
+<!-- SEARCH -->
+<form method="GET" action="/">
     <input type="hidden" name="user" value="{{ user }}">
     <input name="query" placeholder="Search books">
-    <button>Search</button>
+    <button type="submit">Search</button>
 </form>
 
+<!-- FILTER BUTTONS -->
 <div class="filters">
-    <a href="/?user={{ user }}"><button class="all">All</button></a>
-    <a href="/?user={{ user }}&status=Want to Read"><button class="want">Want to Read</button></a>
-    <a href="/?user={{ user }}&status=Reading"><button class="reading">Reading</button></a>
-    <a href="/?user={{ user }}&status=Finished"><button class="finished">Finished</button></a>
+    <a href="/?user={{ user }}"><button>All</button></a>
+    <a href="/?user={{ user }}&status=Want to Read"><button>Want to Read</button></a>
+    <a href="/?user={{ user }}&status=Reading"><button>Reading</button></a>
+    <a href="/?user={{ user }}&status=Finished"><button>Finished</button></a>
 </div>
 
-<br>
-
-<form method="POST">
+<!-- ADD BOOK -->
+<form method="POST" action="/">
     <input type="hidden" name="user" value="{{ user }}">
+
     <input name="title" placeholder="Title" required>
     <input name="author" placeholder="Author">
     <input name="genre" placeholder="Genre">
 
     <select name="priority">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3" selected>3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
+        <option>1</option>
+        <option>2</option>
+        <option selected>3</option>
+        <option>4</option>
+        <option>5</option>
     </select>
 
     <select name="status">
@@ -81,129 +87,60 @@
         <option>Finished</option>
     </select>
 
-    <button>Add Book</button>
+    <button type="submit">Add Book</button>
 </form>
 
 <h2>Your Books</h2>
 
 {% for book in books %}
 <div class="book">
+
     <strong>{{ book.title }}</strong><br>
     {{ book.author }}<br>
     {{ book.genre }}<br>
     Priority: {{ book.priority }}<br>
-    Status: {{ book.status }}<br>
 
+    {% if book.status == "Want to Read" %}
+        <span class="want">Status: {{ book.status }}</span>
+    {% elif book.status == "Reading" %}
+        <span class="reading">Status: {{ book.status }}</span>
+    {% else %}
+        <span class="finished">Status: {{ book.status }}</span>
+    {% endif %}
+
+    <!-- UPDATE -->
+    <form method="POST" action="/update">
+        <input type="hidden" name="id" value="{{ book.id }}">
+        <input type="hidden" name="user" value="{{ user }}">
+
+        <input name="title" value="{{ book.title }}">
+        <input name="author" value="{{ book.author }}">
+        <input name="genre" value="{{ book.genre }}">
+
+        <select name="priority">
+            <option {% if book.priority == 1 %}selected{% endif %}>1</option>
+            <option {% if book.priority == 2 %}selected{% endif %}>2</option>
+            <option {% if book.priority == 3 %}selected{% endif %}>3</option>
+            <option {% if book.priority == 4 %}selected{% endif %}>4</option>
+            <option {% if book.priority == 5 %}selected{% endif %}>5</option>
+        </select>
+
+        <select name="status">
+            <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
+            <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
+            <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
+        </select>
+
+        <button>Update</button>
+    </form>
+
+    <!-- REMOVE -->
     <form method="POST" action="/delete">
         <input type="hidden" name="id" value="{{ book.id }}">
         <input type="hidden" name="user" value="{{ user }}">
         <button>Remove</button>
     </form>
-</div>
-{% endfor %}
 
-<footer>
-    <!DOCTYPE html>
-<html>
-<head>
-    <title>Leaflist</title>
-    <style>
-        body {
-            font-family: Arial;
-            background-color: #f4f7f5;
-            text-align: center;
-        }
-
-        h1 {
-            margin-top: 20px;
-        }
-
-        .filters button {
-            margin: 5px;
-            padding: 8px 12px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .all { background-color: #ddd; }
-        .want { background-color: #4da6ff; color: white; }
-        .reading { background-color: #66cc66; color: white; }
-        .finished { background-color: #999; color: white; }
-
-        .book {
-            background: white;
-            margin: 15px auto;
-            padding: 10px;
-            width: 400px;
-            border-radius: 8px;
-        }
-
-        footer {
-            margin-top: 40px;
-            font-size: 12px;
-            color: gray;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>🌿 Leaflist</h1>
-<p>Your personal reading queue</p>
-
-<form method="GET">
-    <input type="hidden" name="user" value="{{ user }}">
-    <input name="query" placeholder="Search books">
-    <button>Search</button>
-</form>
-
-<div class="filters">
-    <a href="/?user={{ user }}"><button class="all">All</button></a>
-    <a href="/?user={{ user }}&status=Want to Read"><button class="want">Want to Read</button></a>
-    <a href="/?user={{ user }}&status=Reading"><button class="reading">Reading</button></a>
-    <a href="/?user={{ user }}&status=Finished"><button class="finished">Finished</button></a>
-</div>
-
-<br>
-
-<form method="POST">
-    <input type="hidden" name="user" value="{{ user }}">
-    <input name="title" placeholder="Title" required>
-    <input name="author" placeholder="Author">
-    <input name="genre" placeholder="Genre">
-
-    <select name="priority">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3" selected>3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-    </select>
-
-    <select name="status">
-        <option>Want to Read</option>
-        <option>Reading</option>
-        <option>Finished</option>
-    </select>
-
-    <button>Add Book</button>
-</form>
-
-<h2>Your Books</h2>
-
-{% for book in books %}
-<div class="book">
-    <strong>{{ book.title }}</strong><br>
-    {{ book.author }}<br>
-    {{ book.genre }}<br>
-    Priority: {{ book.priority }}<br>
-    Status: {{ book.status }}<br>
-
-    <form method="POST" action="/delete">
-        <input type="hidden" name="id" value="{{ book.id }}">
-        <input type="hidden" name="user" value="{{ user }}">
-        <button>Remove</button>
-    </form>
 </div>
 {% endfor %}
 
