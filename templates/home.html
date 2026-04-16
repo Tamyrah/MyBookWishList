@@ -41,21 +41,10 @@ button {
 .status-finished { color:#22c55e; }
 .status-want { color:#60a5fa; }
 
-.filter-bar button {
-    background:#1f2937;
-    color:white;
-    margin:3px;
-}
-
 .card {
     margin:20px 0;
     padding:15px;
     border-bottom:1px solid #333;
-}
-
-img {
-    margin-top:10px;
-    border-radius:6px;
 }
 </style>
 </head>
@@ -99,39 +88,25 @@ img {
 
 <hr>
 
-<!-- FILTERS -->
-<div class="filter-bar">
-<button onclick="filterBooks('all')">All</button>
-<button onclick="filterBooks('Want to Read')">Want to Read</button>
-<button onclick="filterBooks('Reading')">Reading</button>
-<button onclick="filterBooks('Finished')">Finished</button>
-</div>
-
 <h2>Your Books</h2>
 
 {% for book in books %}
-<div class="card book" data-status="{{ book.status }}">
+<div class="card">
 
 <h3>{{ book.title }}</h3>
 <p>{{ book.author }}</p>
 <p>{{ book.genre }}</p>
 
-<p class="
-{% if book.status == 'Reading' %}status-reading{% endif %}
-{% if book.status == 'Finished' %}status-finished{% endif %}
-{% if book.status == 'Want to Read' %}status-want{% endif %}
-">
+<p class="{% if book.status == 'Reading' %}status-reading{% elif book.status == 'Finished' %}status-finished{% else %}status-want{% endif %}">
 Status: {{ book.status }}
 </p>
 
-<!-- REMOVE -->
 <form action="/remove" method="POST">
     <input type="hidden" name="user_key" value="{{ user_key }}">
     <input type="hidden" name="book_id" value="{{ book.id }}">
     <button class="remove-btn">Remove</button>
 </form>
 
-<!-- UPDATE -->
 <form action="/update" method="POST">
     <input type="hidden" name="user_key" value="{{ user_key }}">
     <input type="hidden" name="book_id" value="{{ book.id }}">
@@ -151,10 +126,7 @@ Status: {{ book.status }}
 </div>
 {% endfor %}
 
-<!-- SEARCH RESULTS WITH IMAGES -->
-{% if results %}
-<h2>Search Results</h2>
-
+<!-- SEARCH RESULTS -->
 {% if results %}
 <h2>Search Results</h2>
 
@@ -174,9 +146,7 @@ Status: {{ book.status }}
         <img src="{{ book.image }}" width="120">
     {% endif %}
 
-    <p style="font-size:12px; opacity:0.8;">
-        {{ book.description }}
-    </p>
+    <p style="font-size:12px;">{{ book.description }}</p>
 
     <button class="add-btn">Add Book</button>
 </form>
@@ -186,20 +156,6 @@ Status: {{ book.status }}
 {% endif %}
 
 </div>
-
-<script>
-function filterBooks(status) {
-    let books = document.querySelectorAll(".book");
-
-    books.forEach(book => {
-        if (status === "all" || book.dataset.status === status) {
-            book.style.display = "block";
-        } else {
-            book.style.display = "none";
-        }
-    });
-}
-</script>
 
 </body>
 </html>
