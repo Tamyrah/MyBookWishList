@@ -10,9 +10,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# -----------------------
 # HOME
-# -----------------------
 @app.route("/")
 def home():
     user_key = request.args.get("user")
@@ -24,9 +22,7 @@ def home():
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
-# -----------------------
 # ADD
-# -----------------------
 @app.route("/add", methods=["POST"])
 def add_book():
     user_key = request.form.get("user_key")
@@ -42,40 +38,36 @@ def add_book():
 
     return redirect(f"/?user={user_key}")
 
-# -----------------------
-# REMOVE
-# -----------------------
+# REMOVE (stronger match)
 @app.route("/remove", methods=["POST"])
 def remove_book():
     user_key = request.form.get("user_key")
     book_id = request.form.get("book_id")
 
-    if book_id:
-        supabase.table("books").delete().eq("id", book_id).execute()
+    supabase.table("books")\
+        .delete()\
+        .eq("id", book_id)\
+        .eq("user_id", user_key)\
+        .execute()
 
     return redirect(f"/?user={user_key}")
 
-# -----------------------
 # UPDATE
-# -----------------------
 @app.route("/update", methods=["POST"])
 def update_book():
     user_key = request.form.get("user_key")
     book_id = request.form.get("book_id")
 
-    if book_id:
-        supabase.table("books").update({
-            "author": request.form.get("author"),
-            "genre": request.form.get("genre"),
-            "priority": int(request.form.get("priority")),
-            "status": request.form.get("status")
-        }).eq("id", book_id).execute()
+    supabase.table("books").update({
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": int(request.form.get("priority")),
+        "status": request.form.get("status")
+    }).eq("id", book_id).execute()
 
     return redirect(f"/?user={user_key}")
 
-# -----------------------
-# SEARCH (WITH COVER IMAGES)
-# -----------------------
+# SEARCH WITH COVER + DESCRIPTION
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -96,11 +88,15 @@ def search():
                 if "imageLinks" in info:
                     image = info["imageLinks"].get("thumbnail", "")
 
+                description = info.get("description", "")
+                description = description[:200] + "..." if description else "No description available."
+
                 results.append({
                     "title": info.get("title", ""),
                     "author": ", ".join(info.get("authors", ["Unknown"])),
                     "genre": ", ".join(info.get("categories", [""])),
-                    "image": image
+                    "image": image,
+                    "description": description
                 })
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
