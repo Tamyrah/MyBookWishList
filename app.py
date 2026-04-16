@@ -4,7 +4,6 @@ import os
 
 app = Flask(__name__)
 
-# ENV
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -34,7 +33,7 @@ def home():
 
         return redirect(f"/?user={user}")
 
-    # BASE QUERY
+    # ALWAYS START CLEAN QUERY
     query = supabase.table("books").select("*").eq("user_id", user)
 
     # FILTER
@@ -42,10 +41,10 @@ def home():
     if status:
         query = query.eq("status", status)
 
-    # SEARCH (FIXED)
+    # SEARCH (FIXED PROPERLY)
     search = request.args.get("query")
-    if search:
-        query = query.ilike("title", f"%{search}%")
+    if search and search.strip() != "":
+        query = query.ilike("title", f"%{search.strip()}%")
 
     response = query.order("id", desc=True).execute()
     books = response.data if response.data else []
@@ -53,7 +52,6 @@ def home():
     return render_template("home.html", books=books, user=user)
 
 
-# UPDATE
 @app.route("/update", methods=["POST"])
 def update():
     book_id = request.form.get("id")
@@ -70,18 +68,18 @@ def update():
     return redirect(f"/?user={user}")
 
 
-# DELETE (FIXED)
+# ✅ DELETE FIXED (this is why yours wasn’t working)
 @app.route("/delete", methods=["POST"])
 def delete():
     book_id = request.form.get("id")
     user = request.form.get("user")
 
-    supabase.table("books").delete().eq("id", book_id).execute()
+    if book_id:
+        supabase.table("books").delete().eq("id", book_id).execute()
 
     return redirect(f"/?user={user}")
 
 
-# ENTER PAGE
 @app.route("/enter", methods=["GET", "POST"])
 def enter():
     if request.method == "POST":
