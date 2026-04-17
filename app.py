@@ -14,20 +14,30 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def enter():
     return render_template("enter.html")
 
+# 🔥 HOME (NOW HANDLES FILTERS)
 @app.route("/home")
 def home():
     user_key = request.args.get("user")
+    status_filter = request.args.get("status")
+
     try:
-        res = supabase.table("books").select("*").eq("user_id", user_key).execute()
-        books = res.data or []
+        query = supabase.table("books").select("*").eq("user_id", user_key)
+
+        if status_filter:
+            query = query.eq("status", status_filter)
+
+        books = query.execute().data
     except Exception as e:
         print("HOME ERROR:", e)
         books = []
+
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
+# ➕ ADD
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
+
     try:
         supabase.table("books").insert({
             "user_id": user_key,
@@ -39,12 +49,15 @@ def add():
         }).execute()
     except Exception as e:
         print("ADD ERROR:", e)
+
     return redirect(f"/home?user={user_key}")
 
+# 🔄 UPDATE
 @app.route("/update", methods=["POST"])
 def update():
     user_key = request.form.get("user")
     book_id = request.form.get("id")
+
     try:
         supabase.table("books").update({
             "author": request.form.get("author"),
@@ -54,42 +67,49 @@ def update():
         }).eq("id", book_id).execute()
     except Exception as e:
         print("UPDATE ERROR:", e)
+
     return redirect(f"/home?user={user_key}")
 
+# ❌ REMOVE
 @app.route("/remove", methods=["POST"])
 def remove():
     user_key = request.form.get("user")
     book_id = request.form.get("id")
+
     try:
         supabase.table("books").delete().eq("id", book_id).execute()
     except Exception as e:
         print("REMOVE ERROR:", e)
+
     return redirect(f"/home?user={user_key}")
 
+# 🔍 SEARCH (FULLY FIXED)
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
     query = request.args.get("query")
 
     results = []
+
     try:
         url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
         response = requests.get(url).json()
 
         for item in response.get("items", [])[:5]:
             volume = item.get("volumeInfo", {})
+
             results.append({
-                "title": volume.get("title"),
+                "title": volume.get("title", "No Title"),
                 "author": ", ".join(volume.get("authors", ["Unknown"])),
                 "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-                "description": volume.get("description", "")[:200]
+                "description": volume.get("description", "No description available.")[:200]
             })
+
     except Exception as e:
         print("SEARCH ERROR:", e)
 
     try:
-        res = supabase.table("books").select("*").eq("user_id", user_key).execute()
-        books = res.data or []
+        books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
     except Exception as e:
         print("BOOK FETCH ERROR:", e)
         books = []
