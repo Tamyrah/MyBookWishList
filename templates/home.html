@@ -1,58 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflist</title>
+<title>Leaflist</title>
 
-    <style>
-        body {
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-            font-family: Arial;
-            color: white;
-            text-align: center;
-            margin: 0;
-        }
+<style>
+body {
+    background: linear-gradient(to right,#0f2027,#203a43,#2c5364);
+    font-family: Arial;
+    color:white;
+    text-align:center;
+}
 
-        .book-card {
-            background: rgba(255,255,255,0.08);
-            padding: 20px;
-            margin: 20px auto;
-            width: 60%;
-            border-radius: 15px;
-        }
+.book-card {
+    background: rgba(255,255,255,0.08);
+    padding:20px;
+    margin:20px auto;
+    width:60%;
+    border-radius:15px;
+}
 
-        .want { color:#4da6ff; }
-        .reading { color:#f1c40f; }
-        .finished { color:#2ecc71; }
+img { margin-top:10px; border-radius:8px; }
 
-        input, select {
-            padding: 8px;
-            margin: 5px;
-            border-radius: 6px;
-            border: none;
-        }
+.want { color:#4da6ff; }
+.reading { color:#f1c40f; }
+.finished { color:#2ecc71; }
 
-        button {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-        }
-
-        footer {
-            margin-top: 40px;
-            padding: 15px;
-            background: rgba(0,0,0,0.4);
-            font-size: 13px;
-        }
-
-        .top-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: green;
-            color: white;
-        }
-    </style>
+.top-btn {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:green;
+    color:white;
+}
+</style>
 </head>
 
 <body>
@@ -61,69 +41,92 @@
 <p>Your personal reading queue</p>
 
 <!-- SEARCH -->
-<form action="/search" method="GET">
-    <input type="hidden" name="user" value="{{ user_key }}">
-    <input type="text" name="query" placeholder="Search books" required autofocus>
-    <button>Search</button>
+<form action="/search">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input name="query" placeholder="Search books" required autofocus>
+<button>Search</button>
 </form>
 
 <hr>
 
 <!-- MANUAL ENTRY -->
 <h3>Add Book Manually</h3>
+
 <form action="/add" method="POST">
-    <input type="hidden" name="user" value="{{ user_key }}">
-    <input name="title" placeholder="Title" required>
-    <input name="author" placeholder="Author">
-    <input name="genre" placeholder="Genre">
-    <input type="number" name="priority" placeholder="Priority">
-    <select name="status">
-        <option>Want to Read</option>
-        <option>Reading</option>
-        <option>Finished</option>
-    </select>
-    <button>Add Book</button>
+<input type="hidden" name="user" value="{{ user_key }}">
+
+<input name="title" placeholder="Title" required>
+<input name="author" placeholder="Author">
+
+<!-- GENRE DROPDOWN -->
+<select name="genre">
+<option>Fiction</option>
+<option>Non-Fiction</option>
+<option>Romance</option>
+<option>Fantasy</option>
+<option>Science Fiction</option>
+<option>Mystery</option>
+<option>Self Help</option>
+<option>Biography</option>
+<option>Other</option>
+</select>
+
+<!-- PRIORITY LOCKED -->
+<select name="priority">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+
+<select name="status">
+<option>Want to Read</option>
+<option>Reading</option>
+<option>Finished</option>
+</select>
+
+<!-- empty cover/link for manual -->
+<input type="hidden" name="cover_url">
+<input type="hidden" name="link">
+
+<button>Add Book</button>
 </form>
-
-<hr>
-
-<!-- FILTERS -->
-<div>
-    <button onclick="filterBooks('all')">All</button>
-    <button onclick="filterBooks('Want to Read')">Want to Read</button>
-    <button onclick="filterBooks('Reading')">Reading</button>
-    <button onclick="filterBooks('Finished')">Finished</button>
-</div>
 
 <hr>
 
 <!-- SEARCH RESULTS -->
 {% if results %}
 <h2>Search Results</h2>
+
 {% for book in results %}
 <div class="book-card">
-    <h3>{{ book.title }}</h3>
-    <p>{{ book.author }}</p>
 
-    {% if book.thumbnail %}
-        <img src="{{ book.thumbnail }}" width="120">
-    {% endif %}
+<h3>{{ book.title }}</h3>
+<p>{{ book.author }}</p>
 
-    <p>{{ book.description }}</p>
+{% if book.thumbnail %}
+<img src="{{ book.thumbnail }}" width="120">
+{% endif %}
 
-    <a href="{{ book.link }}" target="_blank">
-        <button>View Book</button>
-    </a>
+<p>{{ book.description }}</p>
 
-    <form action="/add" method="POST">
-        <input type="hidden" name="user" value="{{ user_key }}">
-        <input type="hidden" name="title" value="{{ book.title }}">
-        <input type="hidden" name="author" value="{{ book.author }}">
-        <input type="hidden" name="genre" value="Unknown">
-        <input type="hidden" name="priority" value="1">
-        <input type="hidden" name="status" value="Want to Read">
-        <button>Add Book</button>
-    </form>
+<a href="{{ book.link }}" target="_blank">
+<button>View Book</button>
+</a>
+
+<form action="/add" method="POST">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input type="hidden" name="title" value="{{ book.title }}">
+<input type="hidden" name="author" value="{{ book.author }}">
+<input type="hidden" name="genre" value="Unknown">
+<input type="hidden" name="priority" value="1">
+<input type="hidden" name="status" value="Want to Read">
+<input type="hidden" name="cover_url" value="{{ book.thumbnail }}">
+<input type="hidden" name="link" value="{{ book.link }}">
+<button>Add Book</button>
+</form>
+
 </div>
 {% endfor %}
 {% endif %}
@@ -133,26 +136,37 @@
 <h2>Your Books</h2>
 
 {% for book in books %}
-<div class="book-card" data-status="{{ book.status }}">
-    <h3>{{ book.title }}</h3>
-    <p>{{ book.author }}</p>
-    <p>{{ book.genre }}</p>
-    <p>Priority: {{ book.priority }}</p>
+<div class="book-card">
 
-    <p class="
-        {% if book.status == 'Want to Read' %}want
-        {% elif book.status == 'Reading' %}reading
-        {% else %}finished
-        {% endif %}
-    ">
-        Status: {{ book.status }}
-    </p>
+<h3>{{ book.title }}</h3>
+<p>{{ book.author }}</p>
 
-    <form action="/remove" method="POST">
-        <input type="hidden" name="id" value="{{ book.id }}">
-        <input type="hidden" name="user" value="{{ user_key }}">
-        <button style="background:red;color:white;">Remove</button>
-    </form>
+{% if book.cover_url %}
+<img src="{{ book.cover_url }}" width="120">
+{% endif %}
+
+<p>{{ book.genre }}</p>
+<p>Priority: {{ book.priority }}</p>
+
+<p class="
+{% if book.status=='Want to Read' %}want
+{% elif book.status=='Reading' %}reading
+{% else %}finished{% endif %}">
+Status: {{ book.status }}
+</p>
+
+{% if book.link %}
+<a href="{{ book.link }}" target="_blank">
+<button>View Book</button>
+</a>
+{% endif %}
+
+<form action="/remove" method="POST">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user_key }}">
+<button style="background:red;color:white;">Remove</button>
+</form>
+
 </div>
 {% endfor %}
 
@@ -160,23 +174,9 @@
 Top
 </button>
 
-<footer>
+<footer style="margin-top:40px;padding:10px;">
 © 2026 Greenleigh Lane. All Rights Reserved.
 </footer>
-
-<script>
-function filterBooks(status) {
-    let cards = document.querySelectorAll(".book-card");
-    cards.forEach(card => {
-        if (status === "all") {
-            card.style.display = "block";
-        } else {
-            card.style.display =
-                card.dataset.status === status ? "block" : "none";
-        }
-    });
-}
-</script>
 
 </body>
 </html>
