@@ -1,123 +1,35 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <title>Leaflist</title>
-
-
-<style>
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', sans-serif;
-        background: radial-gradient(circle at top left, #1f4037, #0f2027);
-        color: white;
-    }
-
-    .container {
-        width: 90%;
-        max-width: 900px;
-        margin: auto;
-        padding: 20px;
-        text-align: center;
-    }
-
-    h1 {
-        margin-bottom: 5px;
-    }
-
-    /* 💎 TRUE GLASS */
-    .glass {
-        position: relative;
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.2);
-
-        box-shadow:
-            0 8px 32px rgba(0,0,0,0.5),
-            inset 0 1px 1px rgba(255,255,255,0.15);
-
-        padding: 20px;
-        margin: 20px 0;
-        overflow: hidden;
-        transition: all 0.4s ease;
-    }
-
-    /* ✨ LIGHT REFLECTION */
-    .glass::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            120deg,
-            transparent,
-            rgba(255,255,255,0.25),
-            transparent
-        );
-        transform: rotate(25deg);
-        opacity: 0.25;
-    }
-
-    /* 🌟 HOVER GLOSS */
-    .glass:hover {
-        transform: translateY(-5px) scale(1.01);
-        box-shadow:
-            0 20px 60px rgba(0,0,0,0.8),
-            inset 0 2px 4px rgba(255,255,255,0.25);
-    }
-
-    input, select {
-        padding: 10px;
-        border-radius: 12px;
-        border: none;
-        margin: 5px;
-        background: rgba(255,255,255,0.2);
-        color: white;
-        backdrop-filter: blur(10px);
-    }
-
-    button {
-        padding: 10px 14px;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-
-    .add-btn { background: linear-gradient(45deg, #2ecc71, #27ae60); color: white; }
-    .update-btn { background: linear-gradient(45deg, #f1c40f, #f39c12); }
-    .remove-btn { background: linear-gradient(45deg, #e74c3c, #c0392b); color: white; }
-    .search-btn { background: linear-gradient(45deg, #f39c12, #e67e22); color: white; }
-
-    .want { color: #6ec6ff; }
-    .reading { color: #ffd166; }
-    .finished { color: #2ecc71; }
-
-    .filters button {
-        margin: 5px;
-        background: rgba(255,255,255,0.1);
-        color: white;
-    }
-
-    img {
-        margin-top: 10px;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    }
-</style>
-
-
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            text-align: center;
+        }
+        .container { width: 90%; max-width: 800px; margin: auto; }
+        .card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(18px);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 18px 0;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        input, select, button { padding: 10px; margin: 5px; border-radius: 8px; border: none; }
+        button { cursor: pointer; font-weight: bold; }
+        .add { background:#2ecc71; color:#fff; }
+        .update { background:#f1c40f; }
+        .remove { background:#e74c3c; color:#fff; }
+        .search { background:#f39c12; color:#fff; }
+        img { border-radius: 8px; margin-top: 10px; }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-
 
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
@@ -126,96 +38,113 @@
 <form action="/search" method="GET">
     <input type="hidden" name="user" value="{{ user_key }}">
     <input type="text" name="query" placeholder="Search books" autofocus>
-    <button class="search-btn">Search</button>
+    <button class="search">Search</button>
 </form>
 
+<hr>
+
 <!-- ADD -->
-<div class="glass">
-    <form method="POST" action="/add">
-        <input type="hidden" name="user" value="{{ user_key }}">
+<form action="/add" method="POST">
+    <input type="hidden" name="user" value="{{ user_key }}">
 
-        <input name="title" placeholder="Title">
-        <input name="author" placeholder="Author">
-        <input name="genre" placeholder="Genre">
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
 
-        <select name="priority">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select>
+    <select name="priority">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+    </select>
 
-        <select name="status">
-            <option>Want to Read</option>
-            <option>Reading</option>
-            <option>Finished</option>
-        </select>
+    <select name="status">
+        <option>Want to Read</option>
+        <option>Reading</option>
+        <option>Finished</option>
+    </select>
 
-        <button class="add-btn">Add Book</button>
-    </form>
-</div>
+    <button class="add">Add Book</button>
+</form>
 
-<!-- FILTERS -->
-<div class="filters">
-    <a href="/?user={{ user_key }}"><button>All</button></a>
-    <a href="/?user={{ user_key }}&filter=Want to Read"><button>Want to Read</button></a>
-    <a href="/?user={{ user_key }}&filter=Reading"><button>Reading</button></a>
-    <a href="/?user={{ user_key }}&filter=Finished"><button>Finished</button></a>
-</div>
+<hr>
 
-<!-- BOOKS -->
 <h2>Your Books</h2>
 
 {% for book in books %}
-    <div class="glass">
+<div class="card">
 
-        <h3>{{ book.title }}</h3>
-        <p>{{ book.author }}</p>
-        <p>{{ book.genre }}</p>
-        <p>Priority: {{ book.priority }}</p>
+    <h3>{{ book.title }}</h3>
+    <p>{{ book.author }}</p>
+    <p>{{ book.genre }}</p>
+    <p>Priority: {{ book.priority }}</p>
+    <p>Status: {{ book.status }}</p>
 
-        <p class="
-            {% if book.status == 'Want to Read' %}want
-            {% elif book.status == 'Reading' %}reading
-            {% else %}finished
-            {% endif %}
-        ">
-            Status: {{ book.status }}
-        </p>
+    <!-- REMOVE -->
+    <form action="/remove" method="POST">
+        <input type="hidden" name="user" value="{{ user_key }}">
+        <input type="hidden" name="id" value="{{ book.id }}">
+        <button class="remove">Remove</button>
+    </form>
 
-        <form method="POST" action="/remove">
-            <input type="hidden" name="id" value="{{ book.id }}">
-            <input type="hidden" name="user" value="{{ user_key }}">
-            <button class="remove-btn">Remove</button>
-        </form>
+    <!-- UPDATE -->
+    <form action="/update" method="POST">
+        <input type="hidden" name="user" value="{{ user_key }}">
+        <input type="hidden" name="id" value="{{ book.id }}">
 
-        <form method="POST" action="/update">
-            <input type="hidden" name="id" value="{{ book.id }}">
-            <input type="hidden" name="user" value="{{ user_key }}">
+        <input name="author" value="{{ book.author }}">
+        <input name="genre" value="{{ book.genre }}">
 
-            <input name="title" value="{{ book.title }}">
-            <input name="author" value="{{ book.author }}">
-            <input name="genre" value="{{ book.genre }}">
+        <select name="priority">
+            <option value="1" {% if book.priority == 1 %}selected{% endif %}>1</option>
+            <option value="2" {% if book.priority == 2 %}selected{% endif %}>2</option>
+            <option value="3" {% if book.priority == 3 %}selected{% endif %}>3</option>
+            <option value="4" {% if book.priority == 4 %}selected{% endif %}>4</option>
+        </select>
 
-            <select name="priority">
-                <option value="1" {% if book.priority == 1 %}selected{% endif %}>1</option>
-                <option value="2" {% if book.priority == 2 %}selected{% endif %}>2</option>
-                <option value="3" {% if book.priority == 3 %}selected{% endif %}>3</option>
-                <option value="4" {% if book.priority == 4 %}selected{% endif %}>4</option>
-            </select>
+        <select name="status">
+            <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
+            <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
+            <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
+        </select>
 
-            <select name="status">
-                <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
-                <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
-                <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
-            </select>
+        <button class="update">Update</button>
+    </form>
 
-            <button class="update-btn">Update</button>
-        </form>
-
-    </div>
+</div>
 {% endfor %}
 
+<!-- SEARCH RESULTS -->
+{% if results %}
+<h2>Search Results</h2>
+
+{% for book in results %}
+<div class="card">
+
+    <h3>{{ book.title }}</h3>
+    <p>{{ book.author }}</p>
+
+    {% if book.thumbnail %}
+        <img src="{{ book.thumbnail }}" width="120">
+    {% endif %}
+
+    <p>{{ book.description }}</p>
+
+    <form action="/add" method="POST">
+        <input type="hidden" name="user" value="{{ user_key }}">
+        <input type="hidden" name="title" value="{{ book.title }}">
+        <input type="hidden" name="author" value="{{ book.author }}">
+        <input type="hidden" name="genre" value="">
+
+        <input type="hidden" name="priority" value="3">
+        <input type="hidden" name="status" value="Want to Read">
+
+        <button class="add">Add Book</button>
+    </form>
+
+</div>
+{% endfor %}
+{% endif %}
 
 </div>
 
