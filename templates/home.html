@@ -10,10 +10,7 @@ body {
     text-align: center;
 }
 
-.container {
-    width: 90%;
-    margin: auto;
-}
+.container { width: 90%; margin: auto; }
 
 input, select {
     padding: 8px;
@@ -42,46 +39,23 @@ button {
 
 img { width: 120px; border-radius: 10px; }
 
-/* STATUS COLORS */
 .status-read { color: lightgreen; }
 .status-reading { color: orange; }
 .status-want { color: skyblue; }
 
-/* FILTER BUTTONS */
-.filters a {
-    margin: 5px;
-    padding: 6px 10px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 6px;
-    text-decoration: none;
-    color: white;
-}
-
-/* VIEW LINK */
 .view-link {
     color: white;
     text-decoration: underline;
-    display: inline-block;
-    margin: 8px 0;
 }
 
-/* TOP BUTTON */
 #topBtn {
     position: fixed;
     bottom: 20px;
     right: 20px;
     background: green;
     color: white;
-    padding: 10px 14px;
-    border-radius: 8px;
+    padding: 10px;
     display: none;
-}
-
-/* FOOTER */
-footer {
-    margin-top: 40px;
-    padding: 20px;
-    opacity: 0.7;
 }
 </style>
 </head>
@@ -93,16 +67,14 @@ footer {
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
 
-<!-- SEARCH -->
-<form action="/search" method="GET">
+<form action="/search">
 <input type="hidden" name="user" value="{{ user_key }}">
-<input type="text" name="query" placeholder="Search books" autofocus>
+<input name="query" placeholder="Search books" autofocus>
 <button>Search</button>
 </form>
 
 <hr>
 
-<!-- MANUAL ADD -->
 <form action="/add" method="POST">
 <input type="hidden" name="user" value="{{ user_key }}">
 <input name="title" placeholder="Title" required>
@@ -131,43 +103,8 @@ footer {
 
 <hr>
 
-<!-- FILTERS -->
-<div class="filters">
-<a href="/home?user={{ user_key }}">All</a>
-<a href="/home?user={{ user_key }}&filter=Want to Read">Want to Read</a>
-<a href="/home?user={{ user_key }}&filter=Reading">Reading</a>
-<a href="/home?user={{ user_key }}&filter=Finished">Finished</a>
-</div>
-
 <h2>Your Books</h2>
 
-<!-- SEARCH RESULTS -->
-{% for r in results %}
-<div class="card">
-<h3>{{ r.title }}</h3>
-<p>{{ r.author }}</p>
-
-{% if r.thumbnail %}
-<img src="{{ r.thumbnail }}">
-{% endif %}
-
-<br>
-
-<a class="view-link" href="{{ r.link }}" target="_blank">View Book</a>
-
-<form action="/add" method="POST">
-<input type="hidden" name="user" value="{{ user_key }}">
-<input type="hidden" name="title" value="{{ r.title }}">
-<input type="hidden" name="author" value="{{ r.author }}">
-<input type="hidden" name="genre" value="Unknown">
-<input type="hidden" name="priority" value="1">
-<input type="hidden" name="status" value="Want to Read">
-<button class="add">Add Book</button>
-</form>
-</div>
-{% endfor %}
-
-<!-- YOUR BOOKS -->
 {% for book in books %}
 <div class="card">
 
@@ -198,7 +135,14 @@ Status: {{ book.status }}
 <input type="hidden" name="user" value="{{ user_key }}">
 
 <input name="author" value="{{ book.author }}">
-<input name="genre" value="{{ book.genre }}">
+
+<select name="genre">
+<option {% if book.genre == 'Fiction' %}selected{% endif %}>Fiction</option>
+<option {% if book.genre == 'Non-Fiction' %}selected{% endif %}>Non-Fiction</option>
+<option {% if book.genre == 'Romance' %}selected{% endif %}>Romance</option>
+<option {% if book.genre == 'Fantasy' %}selected{% endif %}>Fantasy</option>
+<option {% if book.genre == 'Self Help' %}selected{% endif %}>Self Help</option>
+</select>
 
 <select name="priority">
 <option {{ 'selected' if book.priority == 1 }}>1</option>
@@ -228,18 +172,21 @@ Status: {{ book.status }}
 
 </div>
 
-<!-- TOP BUTTON -->
-<button id="topBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">Top</button>
+<button id="topBtn" onclick="scrollTopNow()">Top</button>
 
-<!-- FOOTER -->
 <footer>
 © 2026 Greenleigh Lane. All rights reserved.
 </footer>
 
 <script>
+function scrollTopNow() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+}
+
 window.onscroll = function() {
     let btn = document.getElementById("topBtn");
-    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+    if (document.documentElement.scrollTop > 200) {
         btn.style.display = "block";
     } else {
         btn.style.display = "none";
