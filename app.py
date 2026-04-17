@@ -10,105 +10,93 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 @app.route("/")
 def enter():
     return render_template("enter.html")
 
+
 @app.route("/home")
 def home():
     user_key = request.args.get("user")
-    status_filter = request.args.get("status")
 
-    try:
-        query = supabase.table("books").select("*").eq("user_id", user_key)
-        if status_filter:
-            query = query.eq("status", status_filter)
-        books = query.execute().data
-    except Exception as e:
-        print("HOME ERROR:", e)
-        books = []
+    books = supabase.table("books")\
+        .select("*")\
+        .eq("user_id", user_key)\
+        .execute().data
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
+
 
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
 
-    try:
-        supabase.table("books").insert({
-            "user_id": user_key,
-            "title": request.form.get("title"),
-            "author": request.form.get("author"),
-            "genre": request.form.get("genre"),
-            "priority": int(request.form.get("priority")),
-            "status": request.form.get("status")
-        }).execute()
-    except Exception as e:
-        print("ADD ERROR:", e)
+    supabase.table("books").insert({
+        "user_id": user_key,
+        "title": request.form.get("title"),
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": int(request.form.get("priority")),
+        "status": request.form.get("status")
+    }).execute()
 
     return redirect(f"/home?user={user_key}")
+
 
 @app.route("/update", methods=["POST"])
 def update():
     user_key = request.form.get("user")
     book_id = request.form.get("id")
 
-    try:
-        supabase.table("books").update({
-            "author": request.form.get("author"),
-            "genre": request.form.get("genre"),
-            "priority": int(request.form.get("priority")),
-            "status": request.form.get("status")
-        }).eq("id", book_id).execute()
-    except Exception as e:
-        print("UPDATE ERROR:", e)
+    supabase.table("books").update({
+        "author": request.form.get("author"),
+        "genre": request.form.get("genre"),
+        "priority": int(request.form.get("priority")),
+        "status": request.form.get("status")
+    }).eq("id", book_id).execute()
 
     return redirect(f"/home?user={user_key}")
+
 
 @app.route("/remove", methods=["POST"])
 def remove():
     user_key = request.form.get("user")
     book_id = request.form.get("id")
 
-    try:
-        supabase.table("books").delete().eq("id", book_id).execute()
-    except Exception as e:
-        print("REMOVE ERROR:", e)
+    supabase.table("books").delete().eq("id", book_id).execute()
 
     return redirect(f"/home?user={user_key}")
 
-# 🔍 NEW SEARCH (OPEN LIBRARY)
+
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
     query = request.args.get("query")
 
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
+    response = requests.get(url).json()
+
     results = []
 
-    try:
-        url = f"https://openlibrary.org/search.json?q={query}"
-        response = requests.get(url, timeout=10).json()
+    for item in response.get("items", [])[:5]:
+        volume = item.get("volumeInfo", {})
 
-        for book in response.get("docs", [])[:5]:
-            cover_id = book.get("cover_i")
+        results.append({
+            "title": volume.get("title"),
+            "author": ", ".join(volume.get("authors", ["Unknown"])),
+            "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
+            "description": f"Published: {volume.get('publishedDate', 'Unknown')}",
+            "link": volume.get("infoLink")
+        })
 
-            results.append({
-                "title": book.get("title", "No Title"),
-                "author": ", ".join(book.get("author_name", ["Unknown"])),
-                "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
-                "description": "Published: " + str(book.get("first_publish_year", "N/A"))
-            })
-
-    except Exception as e:
-        print("SEARCH ERROR:", e)
-
-    try:
-        books = supabase.table("books").select("*").eq("user_id", user_key).execute().data
-    except Exception as e:
-        print("BOOK FETCH ERROR:", e)
-        books = []
+    books = supabase.table("books")\
+        .select("*")\
+        .eq("user_id", user_key)\
+        .execute().data
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
