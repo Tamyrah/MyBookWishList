@@ -42,10 +42,12 @@ button {
 
 img { width: 120px; border-radius: 10px; }
 
+/* STATUS COLORS */
 .status-read { color: lightgreen; }
 .status-reading { color: orange; }
 .status-want { color: skyblue; }
 
+/* FILTER BUTTONS */
 .filters a {
     margin: 5px;
     padding: 6px 10px;
@@ -53,6 +55,33 @@ img { width: 120px; border-radius: 10px; }
     border-radius: 6px;
     text-decoration: none;
     color: white;
+}
+
+/* VIEW LINK */
+.view-link {
+    color: white;
+    text-decoration: underline;
+    display: inline-block;
+    margin: 8px 0;
+}
+
+/* TOP BUTTON */
+#topBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: green;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: none;
+}
+
+/* FOOTER */
+footer {
+    margin-top: 40px;
+    padding: 20px;
+    opacity: 0.7;
 }
 </style>
 </head>
@@ -78,6 +107,7 @@ img { width: 120px; border-radius: 10px; }
 <input type="hidden" name="user" value="{{ user_key }}">
 <input name="title" placeholder="Title" required>
 <input name="author" placeholder="Author">
+
 <select name="genre">
 <option>Fiction</option>
 <option>Non-Fiction</option>
@@ -116,11 +146,14 @@ img { width: 120px; border-radius: 10px; }
 <div class="card">
 <h3>{{ r.title }}</h3>
 <p>{{ r.author }}</p>
+
 {% if r.thumbnail %}
 <img src="{{ r.thumbnail }}">
 {% endif %}
+
 <br>
-<a href="{{ r.link }}" target="_blank">View Book</a>
+
+<a class="view-link" href="{{ r.link }}" target="_blank">View Book</a>
 
 <form action="/add" method="POST">
 <input type="hidden" name="user" value="{{ user_key }}">
@@ -157,7 +190,7 @@ Status: {{ book.status }}
 </p>
 
 {% if book.link %}
-<a href="{{ book.link }}" target="_blank">View Book</a>
+<a class="view-link" href="{{ book.link }}" target="_blank">View Book</a>
 {% endif %}
 
 <form action="/update" method="POST">
@@ -194,6 +227,25 @@ Status: {{ book.status }}
 {% endfor %}
 
 </div>
+
+<!-- TOP BUTTON -->
+<button id="topBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">Top</button>
+
+<!-- FOOTER -->
+<footer>
+© 2026 Greenleigh Lane. All rights reserved.
+</footer>
+
+<script>
+window.onscroll = function() {
+    let btn = document.getElementById("topBtn");
+    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+    }
+};
+</script>
 
 </body>
 </html>
