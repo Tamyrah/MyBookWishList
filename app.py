@@ -31,7 +31,7 @@ def home():
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
 
-# 🔥 Fetch book data
+# 🔥 Always try to get link + cover
 def fetch_book_data(title):
     try:
         url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
