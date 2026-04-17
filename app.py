@@ -39,7 +39,9 @@ def add():
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
         "priority": int(request.form.get("priority")),
-        "status": request.form.get("status")
+        "status": request.form.get("status"),
+        "cover_url": request.form.get("cover_url"),
+        "link": request.form.get("link")
     }).execute()
 
     return redirect(f"/home?user={user_key}")
@@ -70,7 +72,6 @@ def remove():
     return redirect(f"/home?user={user_key}")
 
 
-# ✅ STABLE SEARCH
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -78,23 +79,19 @@ def search():
 
     results = []
 
-    try:
-        url = f"https://openlibrary.org/search.json?q={query}"
-        response = requests.get(url, timeout=5).json()
+    url = f"https://openlibrary.org/search.json?q={query}"
+    response = requests.get(url).json()
 
-        for book in response.get("docs", [])[:5]:
-            cover_id = book.get("cover_i")
+    for book in response.get("docs", [])[:5]:
+        cover_id = book.get("cover_i")
 
-            results.append({
-                "title": book.get("title", "Unknown"),
-                "author": ", ".join(book.get("author_name", ["Unknown"])),
-                "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
-                "description": f"First published: {book.get('first_publish_year', 'N/A')}",
-                "link": f"https://openlibrary.org{book.get('key')}"
-            })
-
-    except Exception as e:
-        print("SEARCH ERROR:", e)
+        results.append({
+            "title": book.get("title", "Unknown"),
+            "author": ", ".join(book.get("author_name", ["Unknown"])),
+            "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
+            "description": f"First published: {book.get('first_publish_year', 'N/A')}",
+            "link": f"https://openlibrary.org{book.get('key')}"
+        })
 
     books = supabase.table("books") \
         .select("*") \
