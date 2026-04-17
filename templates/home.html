@@ -9,6 +9,7 @@
             font-family: Arial;
             color: white;
             text-align: center;
+            margin: 0;
         }
 
         .book-card {
@@ -37,6 +38,13 @@
             cursor: pointer;
         }
 
+        footer {
+            margin-top: 40px;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            font-size: 13px;
+        }
+
         .top-btn {
             position: fixed;
             bottom: 20px;
@@ -61,22 +69,19 @@
 
 <hr>
 
-<!-- ADD BOOK (MANUAL ENTRY RESTORED) -->
+<!-- MANUAL ENTRY -->
 <h3>Add Book Manually</h3>
 <form action="/add" method="POST">
     <input type="hidden" name="user" value="{{ user_key }}">
-
     <input name="title" placeholder="Title" required>
     <input name="author" placeholder="Author">
     <input name="genre" placeholder="Genre">
     <input type="number" name="priority" placeholder="Priority">
-
     <select name="status">
         <option>Want to Read</option>
         <option>Reading</option>
         <option>Finished</option>
     </select>
-
     <button>Add Book</button>
 </form>
 
@@ -95,10 +100,8 @@
 <!-- SEARCH RESULTS -->
 {% if results %}
 <h2>Search Results</h2>
-
 {% for book in results %}
 <div class="book-card">
-
     <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
 
@@ -121,7 +124,6 @@
         <input type="hidden" name="status" value="Want to Read">
         <button>Add Book</button>
     </form>
-
 </div>
 {% endfor %}
 {% endif %}
@@ -132,7 +134,6 @@
 
 {% for book in books %}
 <div class="book-card" data-status="{{ book.status }}">
-
     <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
     <p>{{ book.genre }}</p>
@@ -152,24 +153,6 @@
         <input type="hidden" name="user" value="{{ user_key }}">
         <button style="background:red;color:white;">Remove</button>
     </form>
-
-    <form action="/update" method="POST">
-        <input type="hidden" name="id" value="{{ book.id }}">
-        <input type="hidden" name="user" value="{{ user_key }}">
-
-        <input type="text" name="author" value="{{ book.author }}">
-        <input type="text" name="genre" value="{{ book.genre }}">
-        <input type="number" name="priority" value="{{ book.priority }}">
-
-        <select name="status">
-            <option>Want to Read</option>
-            <option>Reading</option>
-            <option>Finished</option>
-        </select>
-
-        <button style="background:gold;">Update</button>
-    </form>
-
 </div>
 {% endfor %}
 
@@ -177,10 +160,13 @@
 Top
 </button>
 
+<footer>
+© 2026 Greenleigh Lane. All Rights Reserved.
+</footer>
+
 <script>
 function filterBooks(status) {
     let cards = document.querySelectorAll(".book-card");
-
     cards.forEach(card => {
         if (status === "all") {
             card.style.display = "block";
