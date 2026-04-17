@@ -20,9 +20,10 @@ def enter():
 def home():
     user_key = request.args.get("user")
 
-    books = supabase.table("books")\
-        .select("*")\
-        .eq("user_id", user_key)\
+    books = supabase.table("books") \
+        .select("*") \
+        .eq("user_id", user_key) \
+        .order("id", desc=True) \
         .execute().data
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
@@ -74,25 +75,30 @@ def search():
     user_key = request.args.get("user")
     query = request.args.get("query")
 
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-    response = requests.get(url).json()
-
     results = []
 
-    for item in response.get("items", [])[:5]:
-        volume = item.get("volumeInfo", {})
+    try:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
+        response = requests.get(url, timeout=5).json()
 
-        results.append({
-            "title": volume.get("title"),
-            "author": ", ".join(volume.get("authors", ["Unknown"])),
-            "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-            "description": f"Published: {volume.get('publishedDate', 'Unknown')}",
-            "link": volume.get("infoLink")
-        })
+        for item in response.get("items", [])[:5]:
+            volume = item.get("volumeInfo", {})
 
-    books = supabase.table("books")\
-        .select("*")\
-        .eq("user_id", user_key)\
+            results.append({
+                "title": volume.get("title", "Unknown"),
+                "author": ", ".join(volume.get("authors", ["Unknown"])),
+                "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
+                "description": f"Published: {volume.get('publishedDate', 'Unknown')}",
+                "link": volume.get("infoLink", "#")
+            })
+
+    except Exception as e:
+        print("Search error:", e)
+
+    books = supabase.table("books") \
+        .select("*") \
+        .eq("user_id", user_key) \
+        .order("id", desc=True) \
         .execute().data
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
