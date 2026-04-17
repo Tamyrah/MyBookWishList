@@ -11,6 +11,18 @@
             text-align: center;
         }
 
+        .book-card {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            margin: 20px auto;
+            width: 60%;
+            border-radius: 15px;
+        }
+
+        .want { color:#4da6ff; }
+        .reading { color:#f1c40f; }
+        .finished { color:#2ecc71; }
+
         input, select {
             padding: 8px;
             margin: 5px;
@@ -25,24 +37,11 @@
             cursor: pointer;
         }
 
-        .book-card {
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            margin: 20px auto;
-            width: 60%;
-            border-radius: 15px;
-        }
-
-        .view-btn {
-            background-color: #2196F3;
-            color: white;
-        }
-
         .top-btn {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: green;
+            background: green;
             color: white;
         }
     </style>
@@ -51,14 +50,23 @@
 <body>
 
 <h1>🌿 Leaflist</h1>
-<p>Your personal reading queue</p>
 
 <!-- SEARCH -->
 <form action="/search" method="GET">
     <input type="hidden" name="user" value="{{ user_key }}">
-    <input type="text" name="query" placeholder="Search books" required>
-    <button type="submit">Search</button>
+    <input type="text" name="query" placeholder="Search books" required autofocus>
+    <button>Search</button>
 </form>
+
+<hr>
+
+<!-- FILTERS -->
+<div>
+    <button onclick="filterBooks('all')">All</button>
+    <button onclick="filterBooks('Want to Read')">Want to Read</button>
+    <button onclick="filterBooks('Reading')">Reading</button>
+    <button onclick="filterBooks('Finished')">Finished</button>
+</div>
 
 <hr>
 
@@ -78,25 +86,19 @@
 
     <p>{{ book.description }}</p>
 
-    <div>
+    <a href="{{ book.link }}" target="_blank">
+        <button>View Book</button>
+    </a>
 
-        {% if book.link %}
-        <a href="{{ book.link }}" target="_blank">
-            <button class="view-btn">View Book</button>
-        </a>
-        {% endif %}
-
-        <form action="/add" method="POST" style="display:inline;">
-            <input type="hidden" name="user" value="{{ user_key }}">
-            <input type="hidden" name="title" value="{{ book.title }}">
-            <input type="hidden" name="author" value="{{ book.author }}">
-            <input type="hidden" name="genre" value="Unknown">
-            <input type="hidden" name="priority" value="1">
-            <input type="hidden" name="status" value="Want to Read">
-            <button type="submit">Add Book</button>
-        </form>
-
-    </div>
+    <form action="/add" method="POST">
+        <input type="hidden" name="user" value="{{ user_key }}">
+        <input type="hidden" name="title" value="{{ book.title }}">
+        <input type="hidden" name="author" value="{{ book.author }}">
+        <input type="hidden" name="genre" value="Unknown">
+        <input type="hidden" name="priority" value="1">
+        <input type="hidden" name="status" value="Want to Read">
+        <button>Add Book</button>
+    </form>
 
 </div>
 {% endfor %}
@@ -107,22 +109,28 @@
 <h2>Your Books</h2>
 
 {% for book in books %}
-<div class="book-card">
+<div class="book-card" data-status="{{ book.status }}">
 
     <h3>{{ book.title }}</h3>
     <p>{{ book.author }}</p>
     <p>{{ book.genre }}</p>
     <p>Priority: {{ book.priority }}</p>
-    <p>Status: {{ book.status }}</p>
 
-    <!-- REMOVE -->
+    <p class="
+        {% if book.status == 'Want to Read' %}want
+        {% elif book.status == 'Reading' %}reading
+        {% else %}finished
+        {% endif %}
+    ">
+        Status: {{ book.status }}
+    </p>
+
     <form action="/remove" method="POST">
         <input type="hidden" name="id" value="{{ book.id }}">
         <input type="hidden" name="user" value="{{ user_key }}">
         <button style="background:red;color:white;">Remove</button>
     </form>
 
-    <!-- UPDATE -->
     <form action="/update" method="POST">
         <input type="hidden" name="id" value="{{ book.id }}">
         <input type="hidden" name="user" value="{{ user_key }}">
@@ -132,9 +140,9 @@
         <input type="number" name="priority" value="{{ book.priority }}">
 
         <select name="status">
-            <option {% if book.status == "Want to Read" %}selected{% endif %}>Want to Read</option>
-            <option {% if book.status == "Reading" %}selected{% endif %}>Reading</option>
-            <option {% if book.status == "Finished" %}selected{% endif %}>Finished</option>
+            <option>Want to Read</option>
+            <option>Reading</option>
+            <option>Finished</option>
         </select>
 
         <button style="background:gold;">Update</button>
@@ -143,10 +151,25 @@
 </div>
 {% endfor %}
 
-<!-- BACK TO TOP -->
-<button class="top-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-    Top
+<!-- TOP BUTTON -->
+<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+Top
 </button>
+
+<script>
+function filterBooks(status) {
+    let cards = document.querySelectorAll(".book-card");
+
+    cards.forEach(card => {
+        if (status === "all") {
+            card.style.display = "block";
+        } else {
+            card.style.display =
+                card.dataset.status === status ? "block" : "none";
+        }
+    });
+}
+</script>
 
 </body>
 </html>
