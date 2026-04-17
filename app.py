@@ -47,15 +47,16 @@ def fetch_book_data(title):
 def add():
     user_key = request.form.get("user")
     title = request.form.get("title")
+    author = request.form.get("author") or ""
 
     book_data = fetch_book_data(title)
 
-    fallback_link = f"https://www.google.com/search?q={title.replace(' ', '+')}+book"
+    fallback_link = f"https://www.google.com/search?q={title.replace(' ', '+')}+{author.replace(' ', '+')}+book"
 
     supabase.table("books").insert({
         "user_id": user_key,
         "title": title,
-        "author": request.form.get("author"),
+        "author": author,
         "genre": request.form.get("genre"),
         "priority": int(request.form.get("priority")),
         "status": request.form.get("status"),
