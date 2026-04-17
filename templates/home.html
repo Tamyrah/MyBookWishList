@@ -50,12 +50,34 @@
 <body>
 
 <h1>🌿 Leaflist</h1>
+<p>Your personal reading queue</p>
 
 <!-- SEARCH -->
 <form action="/search" method="GET">
     <input type="hidden" name="user" value="{{ user_key }}">
     <input type="text" name="query" placeholder="Search books" required autofocus>
     <button>Search</button>
+</form>
+
+<hr>
+
+<!-- ADD BOOK (MANUAL ENTRY RESTORED) -->
+<h3>Add Book Manually</h3>
+<form action="/add" method="POST">
+    <input type="hidden" name="user" value="{{ user_key }}">
+
+    <input name="title" placeholder="Title" required>
+    <input name="author" placeholder="Author">
+    <input name="genre" placeholder="Genre">
+    <input type="number" name="priority" placeholder="Priority">
+
+    <select name="status">
+        <option>Want to Read</option>
+        <option>Reading</option>
+        <option>Finished</option>
+    </select>
+
+    <button>Add Book</button>
 </form>
 
 <hr>
@@ -151,7 +173,6 @@
 </div>
 {% endfor %}
 
-<!-- TOP BUTTON -->
 <button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
 Top
 </button>
