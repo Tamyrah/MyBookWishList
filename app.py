@@ -77,7 +77,7 @@ def remove():
 
     return redirect(f"/home?user={user_key}")
 
-# 🔍 FIXED SEARCH
+# 🔍 NEW SEARCH (OPEN LIBRARY)
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -86,27 +86,17 @@ def search():
     results = []
 
     try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
+        url = f"https://openlibrary.org/search.json?q={query}"
+        response = requests.get(url, timeout=10).json()
 
-        # 👇 KEY FIX: add headers (prevents blocking)
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-
-        print("SEARCH STATUS:", response.status_code)
-
-        data = response.json()
-
-        for item in data.get("items", [])[:5]:
-            volume = item.get("volumeInfo", {})
+        for book in response.get("docs", [])[:5]:
+            cover_id = book.get("cover_i")
 
             results.append({
-                "title": volume.get("title", "No Title"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-                "description": volume.get("description", "No description available.")[:200]
+                "title": book.get("title", "No Title"),
+                "author": ", ".join(book.get("author_name", ["Unknown"])),
+                "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
+                "description": "Published: " + str(book.get("first_publish_year", "N/A"))
             })
 
     except Exception as e:
