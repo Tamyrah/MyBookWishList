@@ -1,16 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaflist</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            margin-top: 120px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 12px;
+            width: 250px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f39c12;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+
+        .privacy {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #ccc;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+    </style>
 </head>
-<body style="text-align:center; margin-top:100px; font-family:sans-serif;">
 
-    <h1>Welcome to Leaflist 🌿</h1>
+<body>
 
-    <form action="/home" method="GET">
-        <input type="text" name="user" placeholder="Enter name" required>
-        <button type="submit">Enter</button>
-    </form>
+    <div class="container">
+        <h1>Welcome to Leaflist 🌿</h1>
+
+        <form action="/home" method="GET">
+            <input type="text" name="user" placeholder="Enter name" required>
+            <button type="submit">Enter</button>
+        </form>
+
+        <p class="privacy">
+            Your data is saved privately and used only to display your personal reading list.<br>
+            No personal information is shared or sold.
+        </p>
+    </div>
 
 </body>
 </html>
