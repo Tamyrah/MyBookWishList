@@ -14,7 +14,6 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def enter():
     return render_template("enter.html")
 
-# 🔥 HOME (NOW HANDLES FILTERS)
 @app.route("/home")
 def home():
     user_key = request.args.get("user")
@@ -22,10 +21,8 @@ def home():
 
     try:
         query = supabase.table("books").select("*").eq("user_id", user_key)
-
         if status_filter:
             query = query.eq("status", status_filter)
-
         books = query.execute().data
     except Exception as e:
         print("HOME ERROR:", e)
@@ -33,7 +30,6 @@ def home():
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
-# ➕ ADD
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
@@ -52,7 +48,6 @@ def add():
 
     return redirect(f"/home?user={user_key}")
 
-# 🔄 UPDATE
 @app.route("/update", methods=["POST"])
 def update():
     user_key = request.form.get("user")
@@ -70,7 +65,6 @@ def update():
 
     return redirect(f"/home?user={user_key}")
 
-# ❌ REMOVE
 @app.route("/remove", methods=["POST"])
 def remove():
     user_key = request.form.get("user")
@@ -83,7 +77,7 @@ def remove():
 
     return redirect(f"/home?user={user_key}")
 
-# 🔍 SEARCH (FULLY FIXED)
+# 🔍 FIXED SEARCH
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -93,9 +87,19 @@ def search():
 
     try:
         url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url).json()
 
-        for item in response.get("items", [])[:5]:
+        # 👇 KEY FIX: add headers (prevents blocking)
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+
+        print("SEARCH STATUS:", response.status_code)
+
+        data = response.json()
+
+        for item in data.get("items", [])[:5]:
             volume = item.get("volumeInfo", {})
 
             results.append({
