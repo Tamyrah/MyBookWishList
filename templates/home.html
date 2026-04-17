@@ -2,82 +2,92 @@
 <html>
 <head>
 <title>Leaflist</title>
-
 <style>
 body {
-    background: linear-gradient(to right,#0f2027,#203a43,#2c5364);
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    color: white;
     font-family: Arial;
-    color:white;
-    text-align:center;
+    text-align: center;
 }
 
-.book-card {
+.container {
+    width: 90%;
+    margin: auto;
+}
+
+input, select {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.add { background: green; color: white; }
+.update { background: gold; }
+.remove { background: red; color: white; }
+
+.card {
     background: rgba(255,255,255,0.08);
-    padding:20px;
-    margin:20px auto;
-    width:60%;
-    border-radius:15px;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 15px;
 }
 
-img { margin-top:10px; border-radius:8px; }
+img { width: 120px; border-radius: 10px; }
 
-.want { color:#4da6ff; }
-.reading { color:#f1c40f; }
-.finished { color:#2ecc71; }
+.status-read { color: lightgreen; }
+.status-reading { color: orange; }
+.status-want { color: skyblue; }
 
-.top-btn {
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:green;
-    color:white;
+.filters a {
+    margin: 5px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    text-decoration: none;
+    color: white;
 }
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
 
 <!-- SEARCH -->
-<form action="/search">
+<form action="/search" method="GET">
 <input type="hidden" name="user" value="{{ user_key }}">
-<input name="query" placeholder="Search books" required autofocus>
+<input type="text" name="query" placeholder="Search books" autofocus>
 <button>Search</button>
 </form>
 
 <hr>
 
-<!-- MANUAL ENTRY -->
-<h3>Add Book Manually</h3>
-
+<!-- MANUAL ADD -->
 <form action="/add" method="POST">
 <input type="hidden" name="user" value="{{ user_key }}">
-
 <input name="title" placeholder="Title" required>
 <input name="author" placeholder="Author">
-
-<!-- GENRE DROPDOWN -->
 <select name="genre">
 <option>Fiction</option>
 <option>Non-Fiction</option>
 <option>Romance</option>
 <option>Fantasy</option>
-<option>Science Fiction</option>
-<option>Mystery</option>
 <option>Self Help</option>
-<option>Biography</option>
-<option>Other</option>
 </select>
 
-<!-- PRIORITY LOCKED -->
 <select name="priority">
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5">5</option>
+<option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
 </select>
 
 <select name="status">
@@ -86,97 +96,104 @@ img { margin-top:10px; border-radius:8px; }
 <option>Finished</option>
 </select>
 
-<!-- empty cover/link for manual -->
-<input type="hidden" name="cover_url">
-<input type="hidden" name="link">
-
-<button>Add Book</button>
+<button class="add">Add Book</button>
 </form>
 
 <hr>
 
-<!-- SEARCH RESULTS -->
-{% if results %}
-<h2>Search Results</h2>
-
-{% for book in results %}
-<div class="book-card">
-
-<h3>{{ book.title }}</h3>
-<p>{{ book.author }}</p>
-
-{% if book.thumbnail %}
-<img src="{{ book.thumbnail }}" width="120">
-{% endif %}
-
-<p>{{ book.description }}</p>
-
-<a href="{{ book.link }}" target="_blank">
-<button>View Book</button>
-</a>
-
-<form action="/add" method="POST">
-<input type="hidden" name="user" value="{{ user_key }}">
-<input type="hidden" name="title" value="{{ book.title }}">
-<input type="hidden" name="author" value="{{ book.author }}">
-<input type="hidden" name="genre" value="Unknown">
-<input type="hidden" name="priority" value="1">
-<input type="hidden" name="status" value="Want to Read">
-<input type="hidden" name="cover_url" value="{{ book.thumbnail }}">
-<input type="hidden" name="link" value="{{ book.link }}">
-<button>Add Book</button>
-</form>
-
+<!-- FILTERS -->
+<div class="filters">
+<a href="/home?user={{ user_key }}">All</a>
+<a href="/home?user={{ user_key }}&filter=Want to Read">Want to Read</a>
+<a href="/home?user={{ user_key }}&filter=Reading">Reading</a>
+<a href="/home?user={{ user_key }}&filter=Finished">Finished</a>
 </div>
-{% endfor %}
-{% endif %}
-
-<hr>
 
 <h2>Your Books</h2>
 
+<!-- SEARCH RESULTS -->
+{% for r in results %}
+<div class="card">
+<h3>{{ r.title }}</h3>
+<p>{{ r.author }}</p>
+{% if r.thumbnail %}
+<img src="{{ r.thumbnail }}">
+{% endif %}
+<br>
+<a href="{{ r.link }}" target="_blank">View Book</a>
+
+<form action="/add" method="POST">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input type="hidden" name="title" value="{{ r.title }}">
+<input type="hidden" name="author" value="{{ r.author }}">
+<input type="hidden" name="genre" value="Unknown">
+<input type="hidden" name="priority" value="1">
+<input type="hidden" name="status" value="Want to Read">
+<button class="add">Add Book</button>
+</form>
+</div>
+{% endfor %}
+
+<!-- YOUR BOOKS -->
 {% for book in books %}
-<div class="book-card">
+<div class="card">
 
 <h3>{{ book.title }}</h3>
 <p>{{ book.author }}</p>
 
 {% if book.cover_url %}
-<img src="{{ book.cover_url }}" width="120">
+<img src="{{ book.cover_url }}">
 {% endif %}
 
 <p>{{ book.genre }}</p>
 <p>Priority: {{ book.priority }}</p>
 
 <p class="
-{% if book.status=='Want to Read' %}want
-{% elif book.status=='Reading' %}reading
-{% else %}finished{% endif %}">
+{% if book.status == 'Finished' %}status-read
+{% elif book.status == 'Reading' %}status-reading
+{% else %}status-want{% endif %}
+">
 Status: {{ book.status }}
 </p>
 
 {% if book.link %}
-<a href="{{ book.link }}" target="_blank">
-<button>View Book</button>
-</a>
+<a href="{{ book.link }}" target="_blank">View Book</a>
 {% endif %}
+
+<form action="/update" method="POST">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user_key }}">
+
+<input name="author" value="{{ book.author }}">
+<input name="genre" value="{{ book.genre }}">
+
+<select name="priority">
+<option {{ 'selected' if book.priority == 1 }}>1</option>
+<option {{ 'selected' if book.priority == 2 }}>2</option>
+<option {{ 'selected' if book.priority == 3 }}>3</option>
+<option {{ 'selected' if book.priority == 4 }}>4</option>
+<option {{ 'selected' if book.priority == 5 }}>5</option>
+</select>
+
+<select name="status">
+<option {{ 'selected' if book.status == 'Want to Read' }}>Want to Read</option>
+<option {{ 'selected' if book.status == 'Reading' }}>Reading</option>
+<option {{ 'selected' if book.status == 'Finished' }}>Finished</option>
+</select>
+
+<button class="update">Update</button>
+</form>
 
 <form action="/remove" method="POST">
 <input type="hidden" name="id" value="{{ book.id }}">
 <input type="hidden" name="user" value="{{ user_key }}">
-<button style="background:red;color:white;">Remove</button>
+<button class="remove">Remove</button>
 </form>
 
 </div>
 {% endfor %}
 
-<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
-Top
-</button>
-
-<footer style="margin-top:40px;padding:10px;">
-© 2026 Greenleigh Lane. All Rights Reserved.
-</footer>
+</div>
 
 </body>
 </html>
