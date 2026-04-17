@@ -79,9 +79,10 @@ def search():
 
     try:
         url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url, timeout=5).json()
+        response = requests.get(url, timeout=5)
+        data = response.json()
 
-        for item in response.get("items", [])[:5]:
+        for item in data.get("items", [])[:5]:
             volume = item.get("volumeInfo", {})
 
             results.append({
@@ -93,7 +94,7 @@ def search():
             })
 
     except Exception as e:
-        print("Search error:", e)
+        print("SEARCH ERROR:", e)
 
     books = supabase.table("books") \
         .select("*") \
