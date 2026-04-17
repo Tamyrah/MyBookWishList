@@ -19,29 +19,51 @@ def enter():
 @app.route("/home")
 def home():
     user_key = request.args.get("user")
+    filter_status = request.args.get("filter")
 
-    books = supabase.table("books") \
-        .select("*") \
-        .eq("user_id", user_key) \
-        .order("id", desc=True) \
-        .execute().data
+    query = supabase.table("books").select("*").eq("user_id", user_key)
+
+    if filter_status and filter_status != "All":
+        query = query.eq("status", filter_status)
+
+    books = query.order("id", desc=True).execute().data
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
+
+
+# 🔥 Fetch book data
+def fetch_book_data(title):
+    try:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
+        response = requests.get(url).json()
+
+        item = response.get("items", [])[0]
+        volume = item.get("volumeInfo", {})
+
+        return {
+            "cover_url": volume.get("imageLinks", {}).get("thumbnail"),
+            "link": volume.get("infoLink")
+        }
+    except:
+        return {"cover_url": None, "link": None}
 
 
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
+    title = request.form.get("title")
+
+    book_data = fetch_book_data(title)
 
     supabase.table("books").insert({
         "user_id": user_key,
-        "title": request.form.get("title"),
+        "title": title,
         "author": request.form.get("author"),
         "genre": request.form.get("genre"),
         "priority": int(request.form.get("priority")),
         "status": request.form.get("status"),
-        "cover_url": request.form.get("cover_url"),
-        "link": request.form.get("link")
+        "cover_url": book_data["cover_url"],
+        "link": book_data["link"]
     }).execute()
 
     return redirect(f"/home?user={user_key}")
@@ -77,27 +99,21 @@ def search():
     user_key = request.args.get("user")
     query = request.args.get("query")
 
-    results = []
-
-    url = f"https://openlibrary.org/search.json?q={query}"
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
     response = requests.get(url).json()
 
-    for book in response.get("docs", [])[:5]:
-        cover_id = book.get("cover_i")
+    results = []
+    for item in response.get("items", [])[:5]:
+        volume = item.get("volumeInfo", {})
 
         results.append({
-            "title": book.get("title", "Unknown"),
-            "author": ", ".join(book.get("author_name", ["Unknown"])),
-            "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
-            "description": f"First published: {book.get('first_publish_year', 'N/A')}",
-            "link": f"https://openlibrary.org{book.get('key')}"
+            "title": volume.get("title"),
+            "author": ", ".join(volume.get("authors", ["Unknown"])),
+            "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
+            "link": volume.get("infoLink")
         })
 
-    books = supabase.table("books") \
-        .select("*") \
-        .eq("user_id", user_key) \
-        .order("id", desc=True) \
-        .execute().data
+    books = supabase.table("books").select("*").eq("user_id", user_key).order("id", desc=True).execute().data
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
 
