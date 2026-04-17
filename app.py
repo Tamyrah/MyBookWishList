@@ -70,6 +70,7 @@ def remove():
     return redirect(f"/home?user={user_key}")
 
 
+# ✅ STABLE SEARCH
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -78,19 +79,18 @@ def search():
     results = []
 
     try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url, timeout=5)
-        data = response.json()
+        url = f"https://openlibrary.org/search.json?q={query}"
+        response = requests.get(url, timeout=5).json()
 
-        for item in data.get("items", [])[:5]:
-            volume = item.get("volumeInfo", {})
+        for book in response.get("docs", [])[:5]:
+            cover_id = book.get("cover_i")
 
             results.append({
-                "title": volume.get("title", "Unknown"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-                "description": f"Published: {volume.get('publishedDate', 'Unknown')}",
-                "link": volume.get("infoLink", "#")
+                "title": book.get("title", "Unknown"),
+                "author": ", ".join(book.get("author_name", ["Unknown"])),
+                "thumbnail": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None,
+                "description": f"First published: {book.get('first_publish_year', 'N/A')}",
+                "link": f"https://openlibrary.org{book.get('key')}"
             })
 
     except Exception as e:
