@@ -24,6 +24,18 @@ img {
     border-radius: 10px;
 }
 
+/* 🔥 FORCE LINKS WHITE */
+a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: #ddd;
+    text-decoration: underline;
+}
+
 button {
     padding: 8px 12px;
     border-radius: 8px;
@@ -67,6 +79,34 @@ function scrollTopPage() {
 <input name="query" placeholder="Search books" autofocus>
 <button>Search</button>
 </form>
+
+<!-- 🔥 SEARCH RESULTS NOW AT TOP -->
+<h2>Search Results</h2>
+
+{% for r in results %}
+<div class="card">
+<h3>{{ r.title }}</h3>
+<p>{{ r.author }}</p>
+
+{% if r.thumbnail %}
+<img src="{{ r.thumbnail }}">
+{% endif %}
+
+<a href="{{ r.link }}" target="_blank">View Book</a>
+
+<form action="/add" method="POST">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input type="hidden" name="title" value="{{ r.title }}">
+<input type="hidden" name="author" value="{{ r.author }}">
+<input type="hidden" name="genre" value="Unknown">
+<input type="hidden" name="priority" value="1">
+<input type="hidden" name="status" value="Want to Read">
+<button>Add Book</button>
+</form>
+</div>
+{% endfor %}
+
+<hr>
 
 <h2>Add Book Manually</h2>
 
@@ -175,33 +215,6 @@ Status: {{ book.status }}
 <input type="hidden" name="id" value="{{ book.id }}">
 <input type="hidden" name="user" value="{{ user_key }}">
 <button style="background:red;color:white;">Remove</button>
-</form>
-
-</div>
-{% endfor %}
-
-<h2>Search Results</h2>
-
-{% for r in results %}
-<div class="card">
-
-<h3>{{ r.title }}</h3>
-<p>{{ r.author }}</p>
-
-{% if r.thumbnail %}
-<img src="{{ r.thumbnail }}">
-{% endif %}
-
-<a href="{{ r.link }}" target="_blank">View Book</a>
-
-<form action="/add" method="POST">
-<input type="hidden" name="user" value="{{ user_key }}">
-<input type="hidden" name="title" value="{{ r.title }}">
-<input type="hidden" name="author" value="{{ r.author }}">
-<input type="hidden" name="genre" value="Unknown">
-<input type="hidden" name="priority" value="1">
-<input type="hidden" name="status" value="Want to Read">
-<button>Add Book</button>
 </form>
 
 </div>
