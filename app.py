@@ -10,11 +10,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 @app.route("/")
 def enter():
     return render_template("enter.html")
-
 
 @app.route("/home")
 def home():
@@ -30,8 +28,6 @@ def home():
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
-
-# 🔥 Always try to get link + cover
 def fetch_book_data(title):
     try:
         url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
@@ -47,13 +43,14 @@ def fetch_book_data(title):
     except:
         return {"cover_url": None, "link": None}
 
-
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
     title = request.form.get("title")
 
     book_data = fetch_book_data(title)
+
+    fallback_link = f"https://www.google.com/search?q={title.replace(' ', '+')}+book"
 
     supabase.table("books").insert({
         "user_id": user_key,
@@ -63,11 +60,10 @@ def add():
         "priority": int(request.form.get("priority")),
         "status": request.form.get("status"),
         "cover_url": book_data["cover_url"],
-        "link": book_data["link"]
+        "link": book_data["link"] if book_data["link"] else fallback_link
     }).execute()
 
     return redirect(f"/home?user={user_key}")
-
 
 @app.route("/update", methods=["POST"])
 def update():
@@ -83,7 +79,6 @@ def update():
 
     return redirect(f"/home?user={user_key}")
 
-
 @app.route("/remove", methods=["POST"])
 def remove():
     user_key = request.form.get("user")
@@ -92,7 +87,6 @@ def remove():
     supabase.table("books").delete().eq("id", book_id).execute()
 
     return redirect(f"/home?user={user_key}")
-
 
 @app.route("/search")
 def search():
@@ -116,7 +110,6 @@ def search():
     books = supabase.table("books").select("*").eq("user_id", user_key).order("id", desc=True).execute().data
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
