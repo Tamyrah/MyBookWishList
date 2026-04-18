@@ -5,67 +5,86 @@ import requests
 
 app = Flask(__name__)
 
+# Supabase connection (using SAFE anon key)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-@app.route("/")
-def enter():
-    return render_template("enter.html")
 
+# =========================
+# LOGIN (Magic Link)
+# =========================
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+
+        supabase.auth.sign_in_with_otp({
+            "email": email
+        })
+
+        return "Check your email for your login link."
+
+    return render_template("login.html")
+
+
+# =========================
+# HOME
+# =========================
 @app.route("/home")
 def home():
     user_key = request.args.get("user")
-    filter_status = request.args.get("filter")
 
-    query = supabase.table("books").select("*").eq("user_id", user_key)
-
-    if filter_status and filter_status != "All":
-        query = query.eq("status", filter_status)
-
-    books = query.order("id", desc=True).execute().data
+    books = supabase.table("books") \
+        .select("*") \
+        .eq("user_id", user_key) \
+        .order("id", desc=True) \
+        .execute().data
 
     return render_template("home.html", books=books, results=[], user_key=user_key)
 
-def fetch_book_data(title):
-    try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
-        response = requests.get(url).json()
 
-        item = response.get("items", [])[0]
-        volume = item.get("volumeInfo", {})
-
-        return {
-            "cover_url": volume.get("imageLinks", {}).get("thumbnail"),
-            "link": volume.get("infoLink")
-        }
-    except:
-        return {"cover_url": None, "link": None}
-
+# =========================
+# ADD BOOK
+# =========================
 @app.route("/add", methods=["POST"])
 def add():
     user_key = request.form.get("user")
     title = request.form.get("title")
-    author = request.form.get("author") or ""
+    author = request.form.get("author")
+    genre = request.form.get("genre")
+    priority = request.form.get("priority")
+    status = request.form.get("status")
 
-    book_data = fetch_book_data(title)
+    # Try to fetch book cover automatically
+    cover_url = None
+    try:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
+        response = requests.get(url).json()
 
-    fallback_link = f"https://www.google.com/search?q={title.replace(' ', '+')}+{author.replace(' ', '+')}+book"
+        if "items" in response:
+            volume = response["items"][0]["volumeInfo"]
+            cover_url = volume.get("imageLinks", {}).get("thumbnail")
+    except:
+        pass
 
     supabase.table("books").insert({
         "user_id": user_key,
         "title": title,
         "author": author,
-        "genre": request.form.get("genre"),
-        "priority": int(request.form.get("priority")),
-        "status": request.form.get("status"),
-        "cover_url": book_data["cover_url"],
-        "link": book_data["link"] if book_data["link"] else fallback_link
+        "genre": genre,
+        "priority": int(priority),
+        "status": status,
+        "cover_url": cover_url
     }).execute()
 
     return redirect(f"/home?user={user_key}")
 
+
+# =========================
+# UPDATE BOOK
+# =========================
 @app.route("/update", methods=["POST"])
 def update():
     user_key = request.form.get("user")
@@ -80,6 +99,10 @@ def update():
 
     return redirect(f"/home?user={user_key}")
 
+
+# =========================
+# REMOVE BOOK
+# =========================
 @app.route("/remove", methods=["POST"])
 def remove():
     user_key = request.form.get("user")
@@ -89,6 +112,10 @@ def remove():
 
     return redirect(f"/home?user={user_key}")
 
+
+# =========================
+# SEARCH BOOKS
+# =========================
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
@@ -98,6 +125,7 @@ def search():
     response = requests.get(url).json()
 
     results = []
+
     for item in response.get("items", [])[:5]:
         volume = item.get("volumeInfo", {})
 
@@ -105,12 +133,21 @@ def search():
             "title": volume.get("title"),
             "author": ", ".join(volume.get("authors", ["Unknown"])),
             "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
+            "description": volume.get("description", "")[:200],
             "link": volume.get("infoLink")
         })
 
-    books = supabase.table("books").select("*").eq("user_id", user_key).order("id", desc=True).execute().data
+    books = supabase.table("books") \
+        .select("*") \
+        .eq("user_id", user_key) \
+        .order("id", desc=True) \
+        .execute().data
 
     return render_template("home.html", books=books, results=results, user_key=user_key)
 
+
+# =========================
+# RUN APP
+# =========================
 if __name__ == "__main__":
     app.run(debug=True)
