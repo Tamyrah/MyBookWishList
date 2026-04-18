@@ -1,62 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Leaflist Login</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        input {
+            padding: 10px;
+            width: 250px;
+            margin-top: 15px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 270px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .note {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .error {
+            margin-top: 15px;
+            color: #f87171;
+        }
+    </style>
 </head>
+<body>
 
-<body style="background:#0b1c2c; color:white; text-align:center; padding-top:120px; font-family:Arial, sans-serif;">
+    <h1>🌿 Leaflist</h1>
+    <p>Enter your email to access your private reading space</p>
 
-    <h1 style="font-size:36px;">🌿 Leaflist</h1>
+    <input type="email" id="email" placeholder="Enter your email" />
+    <button onclick="sendMagicLink()">Send Magic Link</button>
 
-    <p style="margin-top:10px; font-size:16px;">
-        Enter your email to access your private reading space
-    </p>
+    <div id="message" class="error"></div>
 
-    <form method="POST" style="margin-top:30px;">
-        <input 
-            type="email" 
-            name="email" 
-            placeholder="Enter your email" 
-            required
-            style="padding:10px; width:250px; border-radius:5px; border:none;"
-        >
-        
-        <br><br>
-        
-        <button 
-            type="submit"
-            style="padding:10px 20px; border:none; border-radius:5px; background:#4CAF50; color:white; cursor:pointer;"
-        >
-            Send Magic Link
-        </button>
-    </form>
-
-    <!-- 📨 MESSAGE DISPLAY -->
-    <p style="margin-top:20px; color:#ccc;">
-        {{ message }}
-    </p>
-
-    <!-- 🔐 DISCLAIMER (with breathing room) -->
-    <div style="margin-top:50px;">
-        <p style="font-size:12px; color:#bbb; line-height:1.5;">
-            Your email is only used for secure login.<br>
-            We do not store or share your personal data.
-        </p>
+    <div class="note">
+        Your email is only used for secure login.<br>
+        We do not store or share your personal data.
     </div>
 
-    <!-- 🔥 TOKEN HANDLER (CRITICAL FOR LOGIN) -->
     <script>
-        if (window.location.hash.includes("access_token")) {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
+        async function sendMagicLink() {
+            const email = document.getElementById("email").value;
+            const message = document.getElementById("message");
 
-            const token = params.get("access_token");
+            message.innerText = "";
 
-            if (token) {
-                localStorage.setItem("access_token", token);
+            try {
+                const res = await fetch("/send_magic_link", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email })
+                });
 
-                // send token to backend
-                window.location.href = "/home?token=" + token;
+                const data = await res.json();
+
+                if (data.success) {
+                    message.style.color = "#22c55e";
+                    message.innerText = "Magic link sent! Check your email.";
+                } else {
+                    message.innerText = data.error || "Something went wrong.";
+                }
+
+            } catch (err) {
+                message.innerText = "Server error. Try again.";
             }
         }
     </script>
