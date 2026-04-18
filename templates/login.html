@@ -1,30 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Login - Leaflist</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Leaflist Login</title>
 </head>
+<body style="text-align:center; padding-top:100px; background:#0b1c2c; color:white;">
 
-<body>
+    <h1>🌿 Leaflist</h1>
+    <p>Enter your email to access your private reading space</p>
 
-<div style="text-align:center; margin-top:50px;">
-  <h1>Leaflist</h1>
-  <p>Your personal reading queue</p>
-
-  <h2>Login</h2>
-
-  <form method="POST">
-    <input type="email" name="email" placeholder="Email" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Login</button>
-  </form>
-
-  <p>
-    Don’t have an account?
-    <a href="{{ url_for('register') }}">Register here</a>
-  </p>
-</div>
+    <form method="POST">
+        <input 
+            type="email" 
+            name="email" 
+            placeholder="Enter your email" 
+            required
+            style="padding:10px; border-radius:6px; border:none;"
+        >
+        <br><br>
+        <button style="padding:10px 15px; border-radius:6px; border:none;">
+            Send Magic Link
+        </button>
+    </form>
 
 </body>
 </html>
