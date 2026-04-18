@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Leaflist Login</title>
+
     <style>
         body {
             background: #0f172a;
@@ -16,22 +17,34 @@
         }
 
         input {
-            padding: 10px;
-            width: 250px;
+            padding: 12px;
+            width: 260px;
             margin-top: 15px;
-            border-radius: 5px;
+            border-radius: 6px;
             border: none;
+            font-size: 14px;
         }
 
         button {
             margin-top: 15px;
-            padding: 10px;
+            padding: 12px;
             width: 270px;
             background: #22c55e;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-size: 14px;
         }
 
         .note {
@@ -39,23 +52,20 @@
             font-size: 12px;
             color: #ccc;
             text-align: center;
-        }
-
-        .error {
-            margin-top: 15px;
-            color: #f87171;
+            max-width: 280px;
         }
     </style>
 </head>
+
 <body>
 
     <h1>🌿 Leaflist</h1>
     <p>Enter your email to access your private reading space</p>
 
     <input type="email" id="email" placeholder="Enter your email" />
-    <button onclick="sendMagicLink()">Send Magic Link</button>
+    <button id="magicBtn">Send Magic Link</button>
 
-    <div id="message" class="error"></div>
+    <div id="message" class="message"></div>
 
     <div class="note">
         Your email is only used for secure login.<br>
@@ -63,10 +73,25 @@
     </div>
 
     <script>
-        async function sendMagicLink() {
-            const email = document.getElementById("email").value;
-            const message = document.getElementById("message");
+        const button = document.getElementById("magicBtn");
+        const message = document.getElementById("message");
 
+        let isSending = false;
+
+        button.addEventListener("click", async () => {
+            if (isSending) return; // 🚫 prevents duplicate calls
+
+            const email = document.getElementById("email").value;
+
+            if (!email) {
+                message.style.color = "#f87171";
+                message.innerText = "Please enter your email.";
+                return;
+            }
+
+            isSending = true;
+            button.disabled = true;
+            button.innerText = "Sending...";
             message.innerText = "";
 
             try {
@@ -84,13 +109,22 @@
                     message.style.color = "#22c55e";
                     message.innerText = "Magic link sent! Check your email.";
                 } else {
+                    message.style.color = "#f87171";
                     message.innerText = data.error || "Something went wrong.";
                 }
 
             } catch (err) {
+                message.style.color = "#f87171";
                 message.innerText = "Server error. Try again.";
             }
-        }
+
+            // ⏳ cooldown to prevent rate limit
+            setTimeout(() => {
+                isSending = false;
+                button.disabled = false;
+                button.innerText = "Send Magic Link";
+            }, 60000); // 60 seconds
+        });
     </script>
 
 </body>
