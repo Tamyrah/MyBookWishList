@@ -3,21 +3,47 @@
 <head>
     <title>Leaflist Login</title>
 </head>
-<body style="background:#0b1c2c;color:white;text-align:center;padding-top:100px;">
 
-    <h1>🌿 Leaflist</h1>
-    <p>Enter your email to access your private reading space</p>
+<body style="background:#0b1c2c; color:white; text-align:center; padding-top:120px; font-family:Arial, sans-serif;">
 
-    <form method="POST">
-        <input type="email" name="email" placeholder="Enter your email" required>
+    <h1 style="font-size:36px;">🌿 Leaflist</h1>
+
+    <p style="margin-top:10px; font-size:16px;">
+        Enter your email to access your private reading space
+    </p>
+
+    <form method="POST" style="margin-top:30px;">
+        <input 
+            type="email" 
+            name="email" 
+            placeholder="Enter your email" 
+            required
+            style="padding:10px; width:250px; border-radius:5px; border:none;"
+        >
+        
         <br><br>
-        <button type="submit">Send Magic Link</button>
+        
+        <button 
+            type="submit"
+            style="padding:10px 20px; border:none; border-radius:5px; background:#4CAF50; color:white; cursor:pointer;"
+        >
+            Send Magic Link
+        </button>
     </form>
 
-    <p id="message"></p>
+    <!-- Space + message area -->
+    <p id="message" style="margin-top:20px;"></p>
+
+    <!-- 🔐 Disclaimer (with breathing room) -->
+    <div style="margin-top:50px;">
+        <p style="font-size:12px; color:#bbb; line-height:1.5;">
+            Your email is only used for secure login.<br>
+            We do not store or share your personal data.
+        </p>
+    </div>
 
     <script>
-        // 👇 THIS is the magic fix
+        // 🔥 HANDLE MAGIC LINK TOKEN (FIXES LOGIN)
         if (window.location.hash.includes("access_token")) {
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
@@ -25,10 +51,7 @@
             const token = params.get("access_token");
 
             if (token) {
-                // store token in browser
                 localStorage.setItem("access_token", token);
-
-                // redirect to home
                 window.location.href = "/home";
             }
         }
