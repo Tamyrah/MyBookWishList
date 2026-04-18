@@ -3,24 +3,36 @@
 <head>
     <title>Leaflist Login</title>
 </head>
-<body style="text-align:center; padding-top:100px; background:#0b1c2c; color:white;">
+<body style="background:#0b1c2c;color:white;text-align:center;padding-top:100px;">
 
     <h1>🌿 Leaflist</h1>
     <p>Enter your email to access your private reading space</p>
 
     <form method="POST">
-        <input 
-            type="email" 
-            name="email" 
-            placeholder="Enter your email" 
-            required
-            style="padding:10px; border-radius:6px; border:none;"
-        >
+        <input type="email" name="email" placeholder="Enter your email" required>
         <br><br>
-        <button style="padding:10px 15px; border-radius:6px; border:none;">
-            Send Magic Link
-        </button>
+        <button type="submit">Send Magic Link</button>
     </form>
+
+    <p id="message"></p>
+
+    <script>
+        // 👇 THIS is the magic fix
+        if (window.location.hash.includes("access_token")) {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+
+            const token = params.get("access_token");
+
+            if (token) {
+                // store token in browser
+                localStorage.setItem("access_token", token);
+
+                // redirect to home
+                window.location.href = "/home";
+            }
+        }
+    </script>
 
 </body>
 </html>
