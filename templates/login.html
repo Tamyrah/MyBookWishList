@@ -31,10 +31,12 @@
         </button>
     </form>
 
-    <!-- Space + message area -->
-    <p id="message" style="margin-top:20px;"></p>
+    <!-- 📨 MESSAGE DISPLAY -->
+    <p style="margin-top:20px; color:#ccc;">
+        {{ message }}
+    </p>
 
-    <!-- 🔐 Disclaimer (with breathing room) -->
+    <!-- 🔐 DISCLAIMER (with breathing room) -->
     <div style="margin-top:50px;">
         <p style="font-size:12px; color:#bbb; line-height:1.5;">
             Your email is only used for secure login.<br>
@@ -42,8 +44,8 @@
         </p>
     </div>
 
+    <!-- 🔥 TOKEN HANDLER (CRITICAL FOR LOGIN) -->
     <script>
-        // 🔥 HANDLE MAGIC LINK TOKEN (FIXES LOGIN)
         if (window.location.hash.includes("access_token")) {
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
@@ -52,7 +54,9 @@
 
             if (token) {
                 localStorage.setItem("access_token", token);
-                window.location.href = "/home";
+
+                // send token to backend
+                window.location.href = "/home?token=" + token;
             }
         }
     </script>
