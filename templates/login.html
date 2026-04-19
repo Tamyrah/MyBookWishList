@@ -8,7 +8,7 @@
         body {
             background: #0f172a;
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -16,21 +16,11 @@
             flex-direction: column;
         }
 
-        h1 {
-            margin-bottom: 5px;
-        }
-
-        p {
-            margin-bottom: 20px;
-            color: #cbd5f5;
-        }
-
         input {
             padding: 12px;
             width: 260px;
             border-radius: 6px;
             border: none;
-            font-size: 14px;
         }
 
         button {
@@ -42,100 +32,80 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 15px;
         }
 
         button:disabled {
             background: #4b5563;
-            cursor: not-allowed;
         }
 
         .message {
             margin-top: 15px;
-            font-size: 14px;
-            text-align: center;
         }
 
         .note {
             margin-top: 30px;
             font-size: 12px;
-            color: #9ca3af;
+            color: #aaa;
             text-align: center;
-            max-width: 280px;
-            line-height: 1.4;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>🌿 Leaflist</h1>
-    <p>Enter your email to access your private reading space</p>
+<h1>🌿 Leaflist</h1>
+<p>Enter your email to access your private reading space</p>
 
-    <input type="email" id="email" placeholder="Enter your email" />
-    <button id="magicBtn">Send Magic Link</button>
+<input type="email" id="email" placeholder="Enter your email">
+<button id="btn">Send Magic Link</button>
 
-    <div id="message" class="message"></div>
+<div id="message" class="message"></div>
 
-    <div class="note">
-        Your email is only used for secure login.<br>
-        We do not store or share your personal data.
-    </div>
+<div class="note">
+    Your email is only used for secure login.<br>
+    We do not store or share your personal data.
+</div>
 
-    <script>
-        const button = document.getElementById("magicBtn");
-        const message = document.getElementById("message");
+<script>
+let sending = false;
 
-        let isSending = false;
+document.getElementById("btn").onclick = async () => {
+    if (sending) return;
 
-        button.addEventListener("click", async () => {
-            if (isSending) return; // prevents duplicate requests
+    const email = document.getElementById("email").value;
+    const message = document.getElementById("message");
+    const btn = document.getElementById("btn");
 
-            const email = document.getElementById("email").value.trim();
+    if (!email) {
+        message.innerText = "Enter your email.";
+        return;
+    }
 
-            if (!email) {
-                message.style.color = "#f87171";
-                message.innerText = "Please enter your email.";
-                return;
-            }
+    sending = true;
+    btn.disabled = true;
+    btn.innerText = "Sending...";
 
-            isSending = true;
-            button.disabled = true;
-            button.innerText = "Sending...";
-            message.innerText = "";
+    const res = await fetch("/send_magic_link", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email })
+    });
 
-            try {
-                const res = await fetch("/send_magic_link", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email })
-                });
+    const data = await res.json();
 
-                const data = await res.json();
+    if (data.success) {
+        message.innerText = "Check your email for the magic link.";
+    } else {
+        message.innerText = data.error || "Error occurred.";
+    }
 
-                if (data.success) {
-                    message.style.color = "#22c55e";
-                    message.innerText = "Magic link sent! Check your email.";
-                } else {
-                    message.style.color = "#f87171";
-                    message.innerText = data.error || "Something went wrong.";
-                }
-
-            } catch (err) {
-                message.style.color = "#f87171";
-                message.innerText = "Server error. Try again.";
-            }
-
-            // cooldown to avoid rate limits
-            setTimeout(() => {
-                isSending = false;
-                button.disabled = false;
-                button.innerText = "Send Magic Link";
-            }, 60000); // 60 seconds
-        });
-    </script>
+    setTimeout(() => {
+        sending = false;
+        btn.disabled = false;
+        btn.innerText = "Send Magic Link";
+    }, 60000);
+};
+</script>
 
 </body>
 </html>
