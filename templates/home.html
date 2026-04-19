@@ -27,37 +27,26 @@
             return Object.fromEntries(params.entries());
         }
 
-        async function handleLogin() {
+        function handleLogin() {
             const params = getHashParams();
 
             if (!params.access_token) {
-                document.getElementById("status").innerText = "No login token found.";
+                document.getElementById("status").innerText = "Login failed.";
                 return;
             }
 
-            // Send token to backend
-            const res = await fetch("/set_session", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    access_token: params.access_token,
-                    refresh_token: params.refresh_token
-                })
-            });
+            // ✅ Store session in browser
+            localStorage.setItem("access_token", params.access_token);
+            localStorage.setItem("refresh_token", params.refresh_token);
 
-            if (res.ok) {
-                document.getElementById("status").innerText = "Login successful! Loading your app...";
-                
-                // 👉 THIS is where your real app will load later
-                setTimeout(() => {
-                    document.getElementById("status").innerText = "You are now inside Leaflist 🎉";
-                }, 1000);
+            // ✅ Success
+            document.getElementById("status").innerText = "Login successful! 🎉";
 
-            } else {
-                document.getElementById("status").innerText = "Login failed.";
-            }
+            // 👉 TEMP: show success
+            // 👉 NEXT STEP: redirect into real app
+            setTimeout(() => {
+                document.getElementById("status").innerText = "You are now inside Leaflist 🌿";
+            }, 1000);
         }
 
         handleLogin();
