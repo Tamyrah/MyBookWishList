@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify
 from supabase import create_client
 import os
 
@@ -16,10 +16,10 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # -------------------------------
-# Routes
+# ROUTES
 # -------------------------------
 
-# Login page
+# Login Page
 @app.route("/")
 def login():
     return render_template("login.html")
@@ -53,17 +53,39 @@ def send_magic_link():
         return jsonify({"error": str(e)}), 500
 
 
-# After user clicks magic link
+# Home Page (after magic link click)
 @app.route("/home")
 def home():
-    return """
-    <h1>Welcome to Leaflist 🌿</h1>
-    <p>You are now logged in.</p>
-    """
+    return render_template("home.html")
+
+
+# Receive token from frontend and create session
+@app.route("/set_session", methods=["POST"])
+def set_session():
+    try:
+        data = request.get_json()
+
+        access_token = data.get("access_token")
+        refresh_token = data.get("refresh_token")
+
+        print("🔐 Setting session...")
+
+        supabase.auth.set_session({
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        })
+
+        print("✅ Session set successfully")
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("🔥 SESSION ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 # -------------------------------
-# Run App
+# RUN APP
 # -------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
