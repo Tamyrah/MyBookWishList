@@ -32,56 +32,33 @@ def send_magic_link():
         data = request.get_json()
         email = data.get("email")
 
-        print("📩 Email received:", email)
-
         if not email:
             return jsonify({"error": "Email is required"}), 400
 
-        response = supabase.auth.sign_in_with_otp({
+        supabase.auth.sign_in_with_otp({
             "email": email,
             "options": {
                 "email_redirect_to": "https://mybookwishlist.onrender.com/home"
             }
         })
 
-        print("✅ Supabase response:", response)
-
         return jsonify({"success": True})
 
     except Exception as e:
-        print("🔥 ERROR SENDING MAGIC LINK:", str(e))
+        print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
-# Home Page (after magic link click)
+# Home (handles token from email link)
 @app.route("/home")
 def home():
     return render_template("home.html")
 
 
-# Receive token from frontend and create session
-@app.route("/set_session", methods=["POST"])
-def set_session():
-    try:
-        data = request.get_json()
-
-        access_token = data.get("access_token")
-        refresh_token = data.get("refresh_token")
-
-        print("🔐 Setting session...")
-
-        supabase.auth.set_session({
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        })
-
-        print("✅ Session set successfully")
-
-        return jsonify({"success": True})
-
-    except Exception as e:
-        print("🔥 SESSION ERROR:", str(e))
-        return jsonify({"error": str(e)}), 500
+# Final App Page
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 
 # -------------------------------
