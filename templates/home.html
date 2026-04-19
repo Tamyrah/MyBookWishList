@@ -8,49 +8,40 @@
         body {
             background: #0f172a;
             color: white;
-            font-family: Arial;
             text-align: center;
             margin-top: 100px;
+            font-family: Arial;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>🌿 Welcome to Leaflist</h1>
-    <p id="status">Logging you in...</p>
+<h1>🌿 Welcome to Leaflist</h1>
+<p id="status">Logging you in...</p>
 
-    <script>
-        function getHashParams() {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            return Object.fromEntries(params.entries());
-        }
+<script>
+function getParams() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return Object.fromEntries(params.entries());
+}
 
-        function handleLogin() {
-            const params = getHashParams();
+const data = getParams();
 
-            if (!params.access_token) {
-                document.getElementById("status").innerText = "Login failed.";
-                return;
-            }
+if (!data.access_token) {
+    document.getElementById("status").innerText = "Login failed.";
+} else {
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
 
-            // ✅ Store session in browser
-            localStorage.setItem("access_token", params.access_token);
-            localStorage.setItem("refresh_token", params.refresh_token);
+    document.getElementById("status").innerText = "Login successful!";
 
-            // ✅ Success
-            document.getElementById("status").innerText = "Login successful! 🎉";
-
-            // 👉 TEMP: show success
-            // 👉 NEXT STEP: redirect into real app
-            setTimeout(() => {
-                document.getElementById("status").innerText = "You are now inside Leaflist 🌿";
-            }, 1000);
-        }
-
-        handleLogin();
-    </script>
+    setTimeout(() => {
+        window.location.href = "/dashboard";
+    }, 1000);
+}
+</script>
 
 </body>
 </html>
