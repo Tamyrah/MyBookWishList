@@ -35,6 +35,7 @@ def send_magic_link():
         if not email:
             return jsonify({"error": "Email is required"}), 400
 
+        # Send magic link email
         supabase.auth.sign_in_with_otp({
             "email": email,
             "options": {
@@ -45,20 +46,20 @@ def send_magic_link():
         return jsonify({"success": True})
 
     except Exception as e:
-        print("ERROR:", str(e))
+        print("ERROR SENDING MAGIC LINK:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
-# Home (handles token from email link)
+# Home Route (handles token from email link)
 @app.route("/home")
 def home():
     return render_template("home.html")
 
 
-# Final App Page
+# Dashboard Route (THIS loads your REAL app UI)
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    return render_template("home.html")
 
 
 # -------------------------------
