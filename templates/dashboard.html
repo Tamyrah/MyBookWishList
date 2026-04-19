@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,17 +8,128 @@
         body {
             background: #0f172a;
             color: white;
-            text-align: center;
-            margin-top: 100px;
             font-family: Arial;
+            margin: 40px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        input {
+            padding: 10px;
+            width: 70%;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            background: #22c55e;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .book {
+            background: #1e293b;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🌿 Leaflist Dashboard</h1>
-<p>You are officially inside your app.</p>
+<button class="logout" onclick="logout()">Logout</button>
+
+<h1>🌿 Leaflist</h1>
+
+<div class="container">
+
+    <div>
+        <input id="bookInput" placeholder="Enter a book title">
+        <button onclick="addBook()">Add</button>
+    </div>
+
+    <div id="list"></div>
+
+</div>
+
+<script>
+    const listEl = document.getElementById("list");
+
+    function loadBooks() {
+        const books = JSON.parse(localStorage.getItem("books")) || [];
+        listEl.innerHTML = "";
+
+        books.forEach((book, index) => {
+            const div = document.createElement("div");
+            div.className = "book";
+
+            div.innerHTML = `
+                <span>${book}</span>
+                <button onclick="deleteBook(${index})">X</button>
+            `;
+
+            listEl.appendChild(div);
+        });
+    }
+
+    function addBook() {
+        const input = document.getElementById("bookInput");
+        const value = input.value.trim();
+
+        if (!value) return;
+
+        const books = JSON.parse(localStorage.getItem("books")) || [];
+        books.push(value);
+
+        localStorage.setItem("books", JSON.stringify(books));
+
+        input.value = "";
+        loadBooks();
+    }
+
+    function deleteBook(index) {
+        const books = JSON.parse(localStorage.getItem("books")) || [];
+        books.splice(index, 1);
+
+        localStorage.setItem("books", JSON.stringify(books));
+        loadBooks();
+    }
+
+    function logout() {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/";
+    }
+
+    // 🔐 Protect page (must be logged in)
+    if (!localStorage.getItem("access_token")) {
+        window.location.href = "/";
+    }
+
+    loadBooks();
+</script>
 
 </body>
 </html>
+    
