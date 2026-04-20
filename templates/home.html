@@ -1,171 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflist</title>
-    <style>
-        body {
-            background: #0f172a;
-            color: white;
-            font-family: Arial;
-            text-align: center;
-        }
-
-        input, select {
-            padding: 8px;
-            margin: 5px;
-        }
-
-        button {
-            padding: 8px 12px;
-            margin: 5px;
-            background: gold;
-            border: none;
-            cursor: pointer;
-        }
-
-        .reading { color: orange; }
-        .finished { color: lightgreen; }
-        .want { color: lightblue; }
-    </style>
+    <title>Leaflist Login</title>
 </head>
 
-<body>
+<body style="background:#0b1c2c; color:white; text-align:center; padding-top:120px; font-family:Arial, sans-serif;">
 
-<h1>🌿 Leaflist</h1>
+    <h1 style="font-size:36px;">🌿 Leaflist</h1>
 
-<h3 id="greeting"></h3>
+    <p style="margin-top:10px; font-size:16px;">
+        Enter your email to access your private reading space
+    </p>
 
-<input id="searchBox" placeholder="Search books" autofocus>
-<button onclick="searchBooks()">Search</button>
+    <form method="POST" style="margin-top:30px;">
+        <input 
+            type="email" 
+            name="email" 
+            placeholder="Enter your email" 
+            required
+            style="padding:10px; width:250px; border-radius:5px; border:none;"
+        >
+        
+        <br><br>
+        
+        <button 
+            type="submit"
+            style="padding:10px 20px; border:none; border-radius:5px; background:#4CAF50; color:white; cursor:pointer;"
+        >
+            Send Magic Link
+        </button>
+    </form>
 
-<div id="results"></div>
+    <!-- 📨 MESSAGE DISPLAY -->
+    <p style="margin-top:20px; color:#ccc;">
+        {{ message }}
+    </p>
 
-<hr>
+    <!-- 🔐 DISCLAIMER (with breathing room) -->
+    <div style="margin-top:50px;">
+        <p style="font-size:12px; color:#bbb; line-height:1.5;">
+            Your email is only used for secure login.<br>
+            We do not store or share your personal data.
+        </p>
+    </div>
 
-<h3>Add Book</h3>
-<input id="title" placeholder="Title">
-<input id="author" placeholder="Author">
-<select id="genre">
-    <option>Fiction</option>
-    <option>Nonfiction</option>
-    <option>Romance</option>
-    <option>Young Adult</option>
-</select>
-<input id="priority" type="number" value="1">
+    <!-- 🔥 TOKEN HANDLER (CRITICAL FOR LOGIN) -->
+    <script>
+        if (window.location.hash.includes("access_token")) {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
 
-<select id="status">
-    <option>Want to Read</option>
-    <option>Reading</option>
-    <option>Finished</option>
-</select>
+            const token = params.get("access_token");
 
-<button onclick="addBook()">Add Book</button>
+            if (token) {
+                localStorage.setItem("access_token", token);
 
-<hr>
-
-<h3>Filters</h3>
-<button onclick="filterBooks('all')">All</button>
-<button onclick="filterBooks('Want to Read')">Want to Read</button>
-<button onclick="filterBooks('Reading')">Reading</button>
-<button onclick="filterBooks('Finished')">Finished</button>
-
-<hr>
-
-<h2>Your Books</h2>
-<div id="books"></div>
-
-<p style="margin-top:40px;">
-© 2026 Greenleigh Lane. All rights reserved.<br>
-Your email is only used for secure login. We do not store or share your personal data.
-</p>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-
-const supabase = supabase.createClient("YOUR_URL", "YOUR_KEY");
-
-async function apiFetch(url, options = {}) {
-    const { data } = await supabase.auth.getSession();
-
-    return fetch(url, {
-        ...options,
-        headers: {
-            ...(options.headers || {}),
-            Authorization: `Bearer ${data.session.access_token}`
+                // send token to backend
+                window.location.href = "/home?token=" + token;
+            }
         }
-    });
-}
-
-let allBooks = [];
-
-async function loadBooks() {
-    const res = await apiFetch('/books');
-    const data = await res.json();
-    allBooks = data;
-    renderBooks(data);
-}
-
-function renderBooks(data) {
-    books.innerHTML = "";
-
-    data.forEach(b => {
-        books.innerHTML += `
-        <div>
-            <b>${b.title}</b><br>
-            ${b.author}<br>
-            ${b.genre}<br>
-            Priority: ${b.priority}<br>
-            Status: <span class="${b.status === 'Reading' ? 'reading' : b.status === 'Finished' ? 'finished' : 'want'}">${b.status}</span><br>
-
-            <button onclick="removeBook('${b.id}')">Remove</button>
-            <br><br>
-        </div><hr>`;
-    });
-}
-
-async function addBook() {
-    await apiFetch('/add-book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            title: title.value,
-            author: author.value,
-            genre: genre.value,
-            priority: priority.value,
-            status: status.value
-        })
-    });
-
-    loadBooks();
-}
-
-async function removeBook(id) {
-    await apiFetch('/remove-book/' + id, { method: 'DELETE' });
-    loadBooks();
-}
-
-async function searchBooks() {
-    const res = await fetch('/search?query=' + searchBox.value);
-    const data = await res.json();
-    results.innerHTML = data.map(b => `<div>${b.title}</div>`).join("");
-}
-
-function filterBooks(type) {
-    if (type === "all") return renderBooks(allBooks);
-    renderBooks(allBooks.filter(b => b.status === type));
-}
-
-async function setGreeting() {
-    const { data } = await supabase.auth.getUser();
-    const email = data.user.email;
-    const name = email.split("@")[0];
-    greeting.innerText = "Hello, " + name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-loadBooks();
-setGreeting();
-
-</script>
+    </script>
 
 </body>
 </html>
