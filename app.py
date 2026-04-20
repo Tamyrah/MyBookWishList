@@ -1,85 +1,97 @@
 from flask import Flask, render_template, request, jsonify
-from supabase import create_client
-import requests
-import os
+from flask_cors import CORS
+import uuid
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 
-# -------------------------------
-# Supabase Setup
-# -------------------------------
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# TEMP storage (per user token)
+books_db = {}
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# -------------------------------
-# ROUTES
-# -------------------------------
+def get_user():
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return None
+    return auth_header.split(" ")[1]
 
 @app.route("/")
-def login():
-    return render_template("login.html")
-
-
-@app.route("/send_magic_link", methods=["POST"])
-def send_magic_link():
-    data = request.get_json()
-    email = data.get("email")
-
-    supabase.auth.sign_in_with_otp({
-        "email": email,
-        "options": {
-            "email_redirect_to": "https://mybookwishlist.onrender.com/home"
-        }
-    })
-
-    return jsonify({"success": True})
-
-
-@app.route("/home")
 def home():
-    return render_template("home.html", results=[])
+    return render_template("home.html")
 
+@app.route("/books", methods=["GET"])
+def get_books():
+    user = get_user()
+    if not user:
+        return jsonify([])
+    return jsonify(books_db.get(user, []))
 
-@app.route("/dashboard")
-def dashboard():
-    return render_template("home.html", results=[])
+@app.route("/add-book", methods=["POST"])
+def add_book():
+    user = get_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
 
+    data = request.json
 
-# -------------------------------
-# 🔍 SEARCH ROUTE (THIS FIXES YOUR ERROR)
-# -------------------------------
-@app.route("/search")
-def search():
-    query = request.args.get("query")
+    book = {
+        "id": str(uuid.uuid4()),
+        "title": data.get("title"),
+        "author": data.get("author"),
+        "genre": data.get("genre"),
+        "priority": data.get("priority"),
+        "status": data.get("status")
+    }
 
-    if not query:
-        return render_template("home.html", results=[])
+    books_db.setdefault(user, []).append(book)
+    return jsonify(book)
 
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
+@app.route("/remove-book/<book_id>", methods=["DELETE"])
+def remove_book(book_id):
+    user = get_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
 
-    response = requests.get(url)
-    data = response.json()
+    books_db[user] = [
+        b for b in books_db.get(user, [])
+        if b["id"] != book_id
+    ]
 
-    results = []
+    return jsonify({"status": "deleted"})
 
-    if "items" in data:
-        for item in data["items"]:
-            volume = item["volumeInfo"]
+@app.route("/update-book/<book_id>", methods=["PUT"])
+def update_book(book_id):
+    user = get_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
 
-            results.append({
-                "title": volume.get("title"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-                "link": volume.get("infoLink")
+    data = request.json
+
+    for b in books_db.get(user, []):
+        if b["id"] == book_id:
+            b.update({
+                "title": data.get("title"),
+                "author": data.get("author"),
+                "genre": data.get("genre"),
+                "priority": data.get("priority"),
+                "status": data.get("status")
             })
 
-    return render_template("home.html", results=results)
+    return jsonify({"status": "updated"})
 
+@app.route("/search")
+def search():
+    query = request.args.get("query", "").lower()
 
-# -------------------------------
-# RUN
-# -------------------------------
+    sample_books = [
+        {"title": "Harry Potter and the Chamber of Secrets", "author": "J.K. Rowling"},
+        {"title": "The Hate U Give", "author": "Angie Thomas"},
+        {"title": "Atomic Habits", "author": "James Clear"},
+        {"title": "The Alchemist", "author": "Paulo Coelho"},
+        {"title": "Disappearing Acts", "author": "Terry McMillan"}
+    ]
+
+    results = [b for b in sample_books if query in b["title"].lower()]
+    return jsonify(results)
+
 if __name__ == "__main__":
     app.run(debug=True)
