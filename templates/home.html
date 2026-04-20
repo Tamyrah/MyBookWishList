@@ -1,65 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflist Login</title>
+    <title>Leaflist</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            margin: 20px;
+        }
+
+        input {
+            padding: 10px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px;
+            margin-left: 5px;
+        }
+
+        .book {
+            margin-top: 20px;
+            padding: 10px;
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        img {
+            max-width: 100px;
+        }
+    </style>
 </head>
 
-<body style="background:#0b1c2c; color:white; text-align:center; padding-top:120px; font-family:Arial, sans-serif;">
+<body>
 
-    <h1 style="font-size:36px;">🌿 Leaflist</h1>
+<h1>🌿 Leaflist</h1>
 
-    <p style="margin-top:10px; font-size:16px;">
-        Enter your email to access your private reading space
-    </p>
+<form action="/search" method="get">
+    <input type="text" name="query" placeholder="Search books...">
+    <button type="submit">Search</button>
+</form>
 
-    <form method="POST" style="margin-top:30px;">
-        <input 
-            type="email" 
-            name="email" 
-            placeholder="Enter your email" 
-            required
-            style="padding:10px; width:250px; border-radius:5px; border:none;"
-        >
-        
-        <br><br>
-        
-        <button 
-            type="submit"
-            style="padding:10px 20px; border:none; border-radius:5px; background:#4CAF50; color:white; cursor:pointer;"
-        >
-            Send Magic Link
-        </button>
-    </form>
+{% if results %}
+    {% for r in results %}
+        <div class="book">
+            <h3>{{ r.title }}</h3>
+            <p>{{ r.author }}</p>
 
-    <!-- 📨 MESSAGE DISPLAY -->
-    <p style="margin-top:20px; color:#ccc;">
-        {{ message }}
-    </p>
+            {% if r.thumbnail %}
+                <img src="{{ r.thumbnail }}">
+            {% endif %}
 
-    <!-- 🔐 DISCLAIMER (with breathing room) -->
-    <div style="margin-top:50px;">
-        <p style="font-size:12px; color:#bbb; line-height:1.5;">
-            Your email is only used for secure login.<br>
-            We do not store or share your personal data.
-        </p>
-    </div>
+            <p>{{ r.description }}</p>
 
-    <!-- 🔥 TOKEN HANDLER (CRITICAL FOR LOGIN) -->
-    <script>
-        if (window.location.hash.includes("access_token")) {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-
-            const token = params.get("access_token");
-
-            if (token) {
-                localStorage.setItem("access_token", token);
-
-                // send token to backend
-                window.location.href = "/home?token=" + token;
-            }
-        }
-    </script>
+            {% if r.link %}
+                <a href="{{ r.link }}" target="_blank">View Book</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No results yet. Try searching for a book.</p>
+{% endif %}
 
 </body>
 </html>
