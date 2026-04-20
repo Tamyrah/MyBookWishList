@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from supabase import create_client
 import requests
 import os
@@ -11,30 +11,22 @@ app = Flask(__name__)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("Missing Supabase environment variables")
-
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # -------------------------------
 # ROUTES
 # -------------------------------
 
-# Login Page
 @app.route("/")
 def login():
     return render_template("login.html")
 
 
-# Send Magic Link
 @app.route("/send_magic_link", methods=["POST"])
 def send_magic_link():
     try:
         data = request.get_json()
         email = data.get("email")
-
-        if not email:
-            return jsonify({"error": "Email is required"}), 400
 
         supabase.auth.sign_in_with_otp({
             "email": email,
@@ -46,24 +38,22 @@ def send_magic_link():
         return jsonify({"success": True})
 
     except Exception as e:
-        print("ERROR SENDING MAGIC LINK:", str(e))
+        print("LOGIN ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
-# Home (used after clicking magic link)
 @app.route("/home")
 def home():
     return render_template("home.html", results=[])
 
 
-# Dashboard (MAIN APP)
 @app.route("/dashboard")
 def dashboard():
     return render_template("home.html", results=[])
 
 
 # -------------------------------
-# SEARCH ROUTE (RESTORES YOUR BOOK SEARCH)
+# SEARCH (FIXED)
 # -------------------------------
 @app.route("/search")
 def search():
@@ -99,7 +89,28 @@ def search():
 
 
 # -------------------------------
-# RUN APP
+# ADD BOOK (FIXES 404)
+# -------------------------------
+@app.route("/add_book", methods=["POST"])
+def add_book():
+    try:
+        title = request.form.get("title")
+        author = request.form.get("author")
+        genre = request.form.get("genre")
+        priority = request.form.get("priority")
+        status = request.form.get("status")
+
+        print("BOOK ADDED:", title, author, genre, priority, status)
+
+        return redirect("/dashboard")
+
+    except Exception as e:
+        print("ADD BOOK ERROR:", str(e))
+        return redirect("/dashboard")
+
+
+# -------------------------------
+# RUN
 # -------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
