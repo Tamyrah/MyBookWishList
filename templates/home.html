@@ -2,16 +2,66 @@
 <html>
 <head>
     <title>Leaflist</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        input, select {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            background: gold;
+            border: none;
+            cursor: pointer;
+        }
+
+        .reading { color: orange; }
+        .finished { color: lightgreen; }
+        .want { color: lightblue; }
+    </style>
 </head>
 
 <body>
 
-<h1>Leaflist 🌿</h1>
+<h1>🌿 Leaflist</h1>
+
+<h3 id="greeting"></h3>
 
 <input id="searchBox" placeholder="Search books" autofocus>
 <button onclick="searchBooks()">Search</button>
 
 <div id="results"></div>
+
+<hr>
+
+<h3>Add Book</h3>
+<input id="title" placeholder="Title">
+<input id="author" placeholder="Author">
+<select id="genre">
+    <option>Fiction</option>
+    <option>Nonfiction</option>
+    <option>Romance</option>
+    <option>Young Adult</option>
+</select>
+<input id="priority" type="number" value="1">
+
+<select id="status">
+    <option>Want to Read</option>
+    <option>Reading</option>
+    <option>Finished</option>
+</select>
+
+<button onclick="addBook()">Add Book</button>
+
+<hr>
 
 <h3>Filters</h3>
 <button onclick="filterBooks('all')">All</button>
@@ -19,30 +69,20 @@
 <button onclick="filterBooks('Reading')">Reading</button>
 <button onclick="filterBooks('Finished')">Finished</button>
 
-<h3>Add Book</h3>
-<input id="title" placeholder="Title">
-<input id="author" placeholder="Author">
-<input id="genre" placeholder="Genre">
-<input id="priority" type="number" value="1">
-<select id="status">
-    <option>Want to Read</option>
-    <option>Reading</option>
-    <option>Finished</option>
-</select>
-<button onclick="addBook()">Add</button>
+<hr>
 
 <h2>Your Books</h2>
 <div id="books"></div>
 
-<!-- ✅ COPYRIGHT (RIGHT PLACE) -->
-<p style="margin-top:40px; text-align:center;">
-    © 2026 Greenleigh Lane. All rights reserved.
+<p style="margin-top:40px;">
+© 2026 Greenleigh Lane. All rights reserved.<br>
+Your email is only used for secure login. We do not store or share your personal data.
 </p>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
 
-const supabase = supabase.createClient("YOUR_SUPABASE_URL", "YOUR_SUPABASE_KEY");
+const supabase = supabase.createClient("YOUR_URL", "YOUR_KEY");
 
 async function apiFetch(url, options = {}) {
     const { data } = await supabase.auth.getSession();
@@ -66,18 +106,18 @@ async function loadBooks() {
 }
 
 function renderBooks(data) {
-    const container = document.getElementById("books");
-    container.innerHTML = "";
+    books.innerHTML = "";
 
     data.forEach(b => {
-        container.innerHTML += `
+        books.innerHTML += `
         <div>
-            <b>${b.title}</b> - ${b.author}<br>
-            ${b.genre} | Priority: ${b.priority}<br>
-            Status: ${b.status}<br>
+            <b>${b.title}</b><br>
+            ${b.author}<br>
+            ${b.genre}<br>
+            Priority: ${b.priority}<br>
+            Status: <span class="${b.status === 'Reading' ? 'reading' : b.status === 'Finished' ? 'finished' : 'want'}">${b.status}</span><br>
 
             <button onclick="removeBook('${b.id}')">Remove</button>
-
             <br><br>
         </div><hr>`;
     });
@@ -105,10 +145,8 @@ async function removeBook(id) {
 }
 
 async function searchBooks() {
-    const q = searchBox.value;
-    const res = await fetch('/search?query=' + q);
+    const res = await fetch('/search?query=' + searchBox.value);
     const data = await res.json();
-
     results.innerHTML = data.map(b => `<div>${b.title}</div>`).join("");
 }
 
@@ -117,7 +155,15 @@ function filterBooks(type) {
     renderBooks(allBooks.filter(b => b.status === type));
 }
 
+async function setGreeting() {
+    const { data } = await supabase.auth.getUser();
+    const email = data.user.email;
+    const name = email.split("@")[0];
+    greeting.innerText = "Hello, " + name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 loadBooks();
+setGreeting();
 
 </script>
 
