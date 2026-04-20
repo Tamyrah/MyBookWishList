@@ -1,81 +1,85 @@
 from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
-import uuid
+from supabase import create_client
+import requests
+import os
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
 
-# In-memory storage (safe for now)
-books_db = {}
+# -------------------------------
+# Supabase Setup
+# -------------------------------
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-def get_user():
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        return None
-    return auth_header.split(" ")[1]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# -------------------------------
+# ROUTES
+# -------------------------------
 
 @app.route("/")
+def login():
+    return render_template("login.html")
+
+
+@app.route("/send_magic_link", methods=["POST"])
+def send_magic_link():
+    data = request.get_json()
+    email = data.get("email")
+
+    supabase.auth.sign_in_with_otp({
+        "email": email,
+        "options": {
+            "email_redirect_to": "https://mybookwishlist.onrender.com/home"
+        }
+    })
+
+    return jsonify({"success": True})
+
+
+@app.route("/home")
 def home():
-    return render_template("home.html")
+    return render_template("home.html", results=[])
 
-@app.route("/books", methods=["GET"])
-def get_books():
-    user = get_user()
-    if not user:
-        return jsonify([])
-    return jsonify(books_db.get(user, []))
 
-@app.route("/add-book", methods=["POST"])
-def add_book():
-    user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
+@app.route("/dashboard")
+def dashboard():
+    return render_template("home.html", results=[])
 
-    data = request.json
 
-    book = {
-        "id": str(uuid.uuid4()),
-        "title": data.get("title"),
-        "author": data.get("author"),
-        "genre": data.get("genre"),
-        "priority": data.get("priority"),
-        "status": data.get("status")
-    }
-
-    books_db.setdefault(user, []).append(book)
-    return jsonify(book)
-
-@app.route("/remove-book/<book_id>", methods=["DELETE"])
-def remove_book(book_id):
-    user = get_user()
-    books_db[user] = [b for b in books_db.get(user, []) if b["id"] != book_id]
-    return jsonify({"status": "deleted"})
-
-@app.route("/update-book/<book_id>", methods=["PUT"])
-def update_book(book_id):
-    user = get_user()
-    data = request.json
-
-    for b in books_db.get(user, []):
-        if b["id"] == book_id:
-            b.update(data)
-
-    return jsonify({"status": "updated"})
-
+# -------------------------------
+# 🔍 SEARCH ROUTE (THIS FIXES YOUR ERROR)
+# -------------------------------
 @app.route("/search")
 def search():
-    query = request.args.get("query", "").lower()
+    query = request.args.get("query")
 
-    sample_books = [
-        {"title": "Harry Potter and the Chamber of Secrets", "author": "J.K. Rowling"},
-        {"title": "The Hate U Give", "author": "Angie Thomas"},
-        {"title": "Atomic Habits", "author": "James Clear"},
-        {"title": "The Alchemist", "author": "Paulo Coelho"},
-        {"title": "Disappearing Acts", "author": "Terry McMillan"}
-    ]
+    if not query:
+        return render_template("home.html", results=[])
 
-    results = [b for b in sample_books if query in b["title"].lower()]
-    return jsonify(results)
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
 
+    response = requests.get(url)
+    data = response.json()
+
+    results = []
+
+    if "items" in data:
+        for item in data["items"]:
+            volume = item["volumeInfo"]
+
+            results.append({
+                "title": volume.get("title"),
+                "author": ", ".join(volume.get("authors", ["Unknown"])),
+                "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
+                "link": volume.get("infoLink")
+            })
+
+    return render_template("home.html", results=results)
+
+
+# -------------------------------
+# RUN
+# -------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
