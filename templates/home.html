@@ -1,230 +1,125 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Leaflist</title>
-
-<style>
-body {
-    background: #0f172a;
-    color: white;
-    text-align: center;
-    font-family: Arial;
-}
-
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    margin: 20px auto;
-    width: 60%;
-    border-radius: 15px;
-}
-
-img {
-    width: 120px;
-    border-radius: 10px;
-}
-
-/* 🔥 FORCE LINKS WHITE */
-a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-a:hover {
-    color: #ddd;
-    text-decoration: underline;
-}
-
-button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-}
-
-.top-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: green;
-    color: white;
-}
-
-.status-reading { color: orange; }
-.status-finished { color: lightgreen; }
-.status-want { color: lightblue; }
-
-footer {
-    margin-top: 40px;
-    opacity: 0.6;
-}
-</style>
-
-<script>
-function scrollTopPage() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-</script>
-
+    <title>Leaflist</title>
 </head>
 
 <body>
 
-<h1>🌿 Leaflist</h1>
-<p>Your personal reading queue</p>
+<h1>Leaflist 🌿</h1>
 
-<form action="/search">
-<input type="hidden" name="user" value="{{ user_key }}">
-<input name="query" placeholder="Search books" autofocus>
-<button>Search</button>
-</form>
+<input id="searchBox" placeholder="Search books" autofocus>
+<button onclick="searchBooks()">Search</button>
 
-<!-- 🔥 SEARCH RESULTS NOW AT TOP -->
-<h2>Search Results</h2>
+<div id="results"></div>
 
-{% for r in results %}
-<div class="card">
-<h3>{{ r.title }}</h3>
-<p>{{ r.author }}</p>
+<h3>Filters</h3>
+<button onclick="filterBooks('all')">All</button>
+<button onclick="filterBooks('Want to Read')">Want to Read</button>
+<button onclick="filterBooks('Reading')">Reading</button>
+<button onclick="filterBooks('Finished')">Finished</button>
 
-{% if r.thumbnail %}
-<img src="{{ r.thumbnail }}">
-{% endif %}
-
-<a href="{{ r.link }}" target="_blank">View Book</a>
-
-<form action="/add" method="POST">
-<input type="hidden" name="user" value="{{ user_key }}">
-<input type="hidden" name="title" value="{{ r.title }}">
-<input type="hidden" name="author" value="{{ r.author }}">
-<input type="hidden" name="genre" value="Unknown">
-<input type="hidden" name="priority" value="1">
-<input type="hidden" name="status" value="Want to Read">
-<button>Add Book</button>
-</form>
-</div>
-{% endfor %}
-
-<hr>
-
-<h2>Add Book Manually</h2>
-
-<form action="/add" method="POST">
-<input type="hidden" name="user" value="{{ user_key }}">
-
-<input name="title" placeholder="Title" required>
-<input name="author" placeholder="Author">
-
-<select name="genre">
-<option>Fiction</option>
-<option>Non-Fiction</option>
-<option>Romance</option>
-<option>Fantasy</option>
-<option>Mystery</option>
-<option>Self Help</option>
+<h3>Add Book</h3>
+<input id="title" placeholder="Title">
+<input id="author" placeholder="Author">
+<input id="genre" placeholder="Genre">
+<input id="priority" type="number" value="1">
+<select id="status">
+    <option>Want to Read</option>
+    <option>Reading</option>
+    <option>Finished</option>
 </select>
-
-<select name="priority">
-<option>1</option>
-<option>2</option>
-<option>3</option>
-<option>4</option>
-<option>5</option>
-</select>
-
-<select name="status">
-<option>Want to Read</option>
-<option>Reading</option>
-<option>Finished</option>
-</select>
-
-<button>Add Book</button>
-</form>
-
-<hr>
-
-<div>
-<a href="/home?user={{ user_key }}&filter=All"><button>All</button></a>
-<a href="/home?user={{ user_key }}&filter=Want to Read"><button>Want to Read</button></a>
-<a href="/home?user={{ user_key }}&filter=Reading"><button>Reading</button></a>
-<a href="/home?user={{ user_key }}&filter=Finished"><button>Finished</button></a>
-</div>
-
-<hr>
+<button onclick="addBook()">Add</button>
 
 <h2>Your Books</h2>
+<div id="books"></div>
 
-{% for book in books %}
-<div class="card">
-
-<h3>{{ book.title }}</h3>
-<p>{{ book.author }}</p>
-
-{% if book.cover_url %}
-<img src="{{ book.cover_url }}">
-{% endif %}
-
-<p>{{ book.genre }}</p>
-<p>Priority: {{ book.priority }}</p>
-
-<p class="
-{% if book.status == 'Reading' %}status-reading
-{% elif book.status == 'Finished' %}status-finished
-{% else %}status-want{% endif %}
-">
-Status: {{ book.status }}
+<!-- ✅ COPYRIGHT (RIGHT PLACE) -->
+<p style="margin-top:40px; text-align:center;">
+    © 2026 Greenleigh Lane. All rights reserved.
 </p>
 
-{% if book.link %}
-<a href="{{ book.link }}" target="_blank">View Book</a>
-{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
 
-<form action="/update" method="POST">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user_key }}">
+const supabase = supabase.createClient("YOUR_SUPABASE_URL", "YOUR_SUPABASE_KEY");
 
-<input name="author" value="{{ book.author }}">
+async function apiFetch(url, options = {}) {
+    const { data } = await supabase.auth.getSession();
 
-<select name="genre">
-<option>{{ book.genre }}</option>
-<option>Fiction</option>
-<option>Non-Fiction</option>
-<option>Romance</option>
-<option>Fantasy</option>
-<option>Mystery</option>
-<option>Self Help</option>
-</select>
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            Authorization: `Bearer ${data.session.access_token}`
+        }
+    });
+}
 
-<select name="priority">
-{% for i in range(1,6) %}
-<option {% if book.priority == i %}selected{% endif %}>{{ i }}</option>
-{% endfor %}
-</select>
+let allBooks = [];
 
-<select name="status">
-<option {% if book.status == 'Want to Read' %}selected{% endif %}>Want to Read</option>
-<option {% if book.status == 'Reading' %}selected{% endif %}>Reading</option>
-<option {% if book.status == 'Finished' %}selected{% endif %}>Finished</option>
-</select>
+async function loadBooks() {
+    const res = await apiFetch('/books');
+    const data = await res.json();
+    allBooks = data;
+    renderBooks(data);
+}
 
-<button>Update</button>
-</form>
+function renderBooks(data) {
+    const container = document.getElementById("books");
+    container.innerHTML = "";
 
-<form action="/remove" method="POST">
-<input type="hidden" name="id" value="{{ book.id }}">
-<input type="hidden" name="user" value="{{ user_key }}">
-<button style="background:red;color:white;">Remove</button>
-</form>
+    data.forEach(b => {
+        container.innerHTML += `
+        <div>
+            <b>${b.title}</b> - ${b.author}<br>
+            ${b.genre} | Priority: ${b.priority}<br>
+            Status: ${b.status}<br>
 
-</div>
-{% endfor %}
+            <button onclick="removeBook('${b.id}')">Remove</button>
 
-<button class="top-btn" onclick="scrollTopPage()">Top</button>
+            <br><br>
+        </div><hr>`;
+    });
+}
 
-<footer>
-© 2026 Greenleigh Lane. All rights reserved.
-</footer>
+async function addBook() {
+    await apiFetch('/add-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title: title.value,
+            author: author.value,
+            genre: genre.value,
+            priority: priority.value,
+            status: status.value
+        })
+    });
+
+    loadBooks();
+}
+
+async function removeBook(id) {
+    await apiFetch('/remove-book/' + id, { method: 'DELETE' });
+    loadBooks();
+}
+
+async function searchBooks() {
+    const q = searchBox.value;
+    const res = await fetch('/search?query=' + q);
+    const data = await res.json();
+
+    results.innerHTML = data.map(b => `<div>${b.title}</div>`).join("");
+}
+
+function filterBooks(type) {
+    if (type === "all") return renderBooks(allBooks);
+    renderBooks(allBooks.filter(b => b.status === type));
+}
+
+loadBooks();
+
+</script>
 
 </body>
 </html>
