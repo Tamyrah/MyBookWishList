@@ -5,7 +5,7 @@ import uuid
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# TEMP storage (per user token)
+# In-memory storage (safe for now)
 books_db = {}
 
 def get_user():
@@ -48,33 +48,17 @@ def add_book():
 @app.route("/remove-book/<book_id>", methods=["DELETE"])
 def remove_book(book_id):
     user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    books_db[user] = [
-        b for b in books_db.get(user, [])
-        if b["id"] != book_id
-    ]
-
+    books_db[user] = [b for b in books_db.get(user, []) if b["id"] != book_id]
     return jsonify({"status": "deleted"})
 
 @app.route("/update-book/<book_id>", methods=["PUT"])
 def update_book(book_id):
     user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
     data = request.json
 
     for b in books_db.get(user, []):
         if b["id"] == book_id:
-            b.update({
-                "title": data.get("title"),
-                "author": data.get("author"),
-                "genre": data.get("genre"),
-                "priority": data.get("priority"),
-                "status": data.get("status")
-            })
+            b.update(data)
 
     return jsonify({"status": "updated"})
 
