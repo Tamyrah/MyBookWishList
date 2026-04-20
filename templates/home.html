@@ -1,67 +1,230 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflist</title>
-    <style>
-        body {
-            background: #0f172a;
-            color: white;
-            font-family: Arial;
-            margin: 20px;
-        }
+<title>Leaflist</title>
 
-        input {
-            padding: 10px;
-            width: 300px;
-        }
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+}
 
-        button {
-            padding: 10px;
-            margin-left: 5px;
-        }
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    margin: 20px auto;
+    width: 60%;
+    border-radius: 15px;
+}
 
-        .book {
-            margin-top: 20px;
-            padding: 10px;
-            background: #1e293b;
-            border-radius: 5px;
-        }
+img {
+    width: 120px;
+    border-radius: 10px;
+}
 
-        img {
-            max-width: 100px;
-        }
-    </style>
+/* 🔥 FORCE LINKS WHITE */
+a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: #ddd;
+    text-decoration: underline;
+}
+
+button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.top-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: green;
+    color: white;
+}
+
+.status-reading { color: orange; }
+.status-finished { color: lightgreen; }
+.status-want { color: lightblue; }
+
+footer {
+    margin-top: 40px;
+    opacity: 0.6;
+}
+</style>
+
+<script>
+function scrollTopPage() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
 </head>
 
 <body>
 
 <h1>🌿 Leaflist</h1>
+<p>Your personal reading queue</p>
 
-<form action="/search" method="get">
-    <input type="text" name="query" placeholder="Search books...">
-    <button type="submit">Search</button>
+<form action="/search">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input name="query" placeholder="Search books" autofocus>
+<button>Search</button>
 </form>
 
-{% if results %}
-    {% for r in results %}
-        <div class="book">
-            <h3>{{ r.title }}</h3>
-            <p>{{ r.author }}</p>
+<!-- 🔥 SEARCH RESULTS NOW AT TOP -->
+<h2>Search Results</h2>
 
-            {% if r.thumbnail %}
-                <img src="{{ r.thumbnail }}">
-            {% endif %}
+{% for r in results %}
+<div class="card">
+<h3>{{ r.title }}</h3>
+<p>{{ r.author }}</p>
 
-            <p>{{ r.description }}</p>
-
-            {% if r.link %}
-                <a href="{{ r.link }}" target="_blank">View Book</a>
-            {% endif %}
-        </div>
-    {% endfor %}
-{% else %}
-    <p>No results yet. Try searching for a book.</p>
+{% if r.thumbnail %}
+<img src="{{ r.thumbnail }}">
 {% endif %}
+
+<a href="{{ r.link }}" target="_blank">View Book</a>
+
+<form action="/add" method="POST">
+<input type="hidden" name="user" value="{{ user_key }}">
+<input type="hidden" name="title" value="{{ r.title }}">
+<input type="hidden" name="author" value="{{ r.author }}">
+<input type="hidden" name="genre" value="Unknown">
+<input type="hidden" name="priority" value="1">
+<input type="hidden" name="status" value="Want to Read">
+<button>Add Book</button>
+</form>
+</div>
+{% endfor %}
+
+<hr>
+
+<h2>Add Book Manually</h2>
+
+<form action="/add" method="POST">
+<input type="hidden" name="user" value="{{ user_key }}">
+
+<input name="title" placeholder="Title" required>
+<input name="author" placeholder="Author">
+
+<select name="genre">
+<option>Fiction</option>
+<option>Non-Fiction</option>
+<option>Romance</option>
+<option>Fantasy</option>
+<option>Mystery</option>
+<option>Self Help</option>
+</select>
+
+<select name="priority">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+</select>
+
+<select name="status">
+<option>Want to Read</option>
+<option>Reading</option>
+<option>Finished</option>
+</select>
+
+<button>Add Book</button>
+</form>
+
+<hr>
+
+<div>
+<a href="/home?user={{ user_key }}&filter=All"><button>All</button></a>
+<a href="/home?user={{ user_key }}&filter=Want to Read"><button>Want to Read</button></a>
+<a href="/home?user={{ user_key }}&filter=Reading"><button>Reading</button></a>
+<a href="/home?user={{ user_key }}&filter=Finished"><button>Finished</button></a>
+</div>
+
+<hr>
+
+<h2>Your Books</h2>
+
+{% for book in books %}
+<div class="card">
+
+<h3>{{ book.title }}</h3>
+<p>{{ book.author }}</p>
+
+{% if book.cover_url %}
+<img src="{{ book.cover_url }}">
+{% endif %}
+
+<p>{{ book.genre }}</p>
+<p>Priority: {{ book.priority }}</p>
+
+<p class="
+{% if book.status == 'Reading' %}status-reading
+{% elif book.status == 'Finished' %}status-finished
+{% else %}status-want{% endif %}
+">
+Status: {{ book.status }}
+</p>
+
+{% if book.link %}
+<a href="{{ book.link }}" target="_blank">View Book</a>
+{% endif %}
+
+<form action="/update" method="POST">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user_key }}">
+
+<input name="author" value="{{ book.author }}">
+
+<select name="genre">
+<option>{{ book.genre }}</option>
+<option>Fiction</option>
+<option>Non-Fiction</option>
+<option>Romance</option>
+<option>Fantasy</option>
+<option>Mystery</option>
+<option>Self Help</option>
+</select>
+
+<select name="priority">
+{% for i in range(1,6) %}
+<option {% if book.priority == i %}selected{% endif %}>{{ i }}</option>
+{% endfor %}
+</select>
+
+<select name="status">
+<option {% if book.status == 'Want to Read' %}selected{% endif %}>Want to Read</option>
+<option {% if book.status == 'Reading' %}selected{% endif %}>Reading</option>
+<option {% if book.status == 'Finished' %}selected{% endif %}>Finished</option>
+</select>
+
+<button>Update</button>
+</form>
+
+<form action="/remove" method="POST">
+<input type="hidden" name="id" value="{{ book.id }}">
+<input type="hidden" name="user" value="{{ user_key }}">
+<button style="background:red;color:white;">Remove</button>
+</form>
+
+</div>
+{% endfor %}
+
+<button class="top-btn" onclick="scrollTopPage()">Top</button>
+
+<footer>
+© 2026 Greenleigh Lane. All rights reserved.
+</footer>
 
 </body>
 </html>
