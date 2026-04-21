@@ -180,6 +180,9 @@ function scrollTopPage() {
 
 <p>{{ book.genre }}</p>
 <p>Priority: {{ book.priority }}</p>
+{% if book.synopsis %}
+<p style="font-size: 13px; color: #cbd5e1; text-align: left; padding: 0 10px;">{{ book.synopsis }}</p>
+{% endif %}
 
 <p class="{% if book.status == 'Reading' %}status-reading{% elif book.status == 'Finished' %}status-finished{% else %}status-want{% endif %}">
 Status: {{ book.status }}
