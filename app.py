@@ -36,9 +36,10 @@ def fetch_book_data(title):
         cover_id = doc.get("cover_i")
         cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None
         link = f"https://openlibrary.org/search?q={title.replace(' ', '+')}"
-        return {"cover_url": cover_url, "link": link}
+        synopsis = doc.get("first_sentence", [""])[0] if doc.get("first_sentence") else ""
+        return {"cover_url": cover_url, "link": link, "synopsis": synopsis}
     except:
-        return {"cover_url": None, "link": None}
+        return {"cover_url": None, "link": None, "synopsis": ""}
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -51,15 +52,16 @@ def add():
     fallback_link = f"https://www.google.com/search?q={title.replace(' ', '+')}+{author.replace(' ', '+')}+book"
 
     supabase.table("books").insert({
-        "user_id": user_key,
-        "title": title,
-        "author": author,
-        "genre": request.form.get("genre"),
-        "priority": int(request.form.get("priority")),
-        "status": request.form.get("status"),
-        "cover_url": book_data["cover_url"],
-        "link": book_data["link"] if book_data["link"] else fallback_link
-    }).execute()
+    "user_id": user_key,
+    "title": title,
+    "author": author,
+    "genre": request.form.get("genre"),
+    "priority": int(request.form.get("priority")),
+    "status": request.form.get("status"),
+    "cover_url": book_data["cover_url"],
+    "link": book_data["link"] if book_data["link"] else fallback_link,
+    "synopsis": book_data["synopsis"]
+}).execute()
 
     return redirect(f"/home?user={user_key}")
 
