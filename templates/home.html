@@ -73,10 +73,19 @@ function scrollTopPage() {
 
 <h1>🌿 Leaflist</h1>
 <p>Your personal reading queue</p>
+<h2 id="greeting" style="color: #22c55e;"></h2>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("user");
+    if (name) {
+        document.getElementById("greeting").innerText = "Hello, " + name + "!";
+    }
+</script>
 
 <form action="/search">
 <input type="hidden" name="user" value="{{ user_key }}">
-<input name="query" placeholder="Search books" autofocus>
+<input name="q" placeholder="Search books" autofocus>
 <button>Search</button>
 </form>
 
@@ -87,7 +96,9 @@ function scrollTopPage() {
 <div class="card">
 <h3>{{ r.title }}</h3>
 <p>{{ r.author }}</p>
-
+{% if r.description %}
+<p style="font-size: 13px; color: #cbd5e1;">{{ r.description[:200] }}...</p>
+{% endif %}
 {% if r.thumbnail %}
 <img src="{{ r.thumbnail }}">
 {% endif %}
@@ -123,6 +134,7 @@ function scrollTopPage() {
 <option>Fantasy</option>
 <option>Mystery</option>
 <option>Self Help</option>
+<option>Young Adult</option>
 </select>
 
 <select name="priority">
@@ -168,11 +180,7 @@ function scrollTopPage() {
 <p>{{ book.genre }}</p>
 <p>Priority: {{ book.priority }}</p>
 
-<p class="
-{% if book.status == 'Reading' %}status-reading
-{% elif book.status == 'Finished' %}status-finished
-{% else %}status-want{% endif %}
-">
+<p class="{% if book.status == 'Reading' %}status-reading{% elif book.status == 'Finished' %}status-finished{% else %}status-want{% endif %}">
 Status: {{ book.status }}
 </p>
 
@@ -194,6 +202,7 @@ Status: {{ book.status }}
 <option>Fantasy</option>
 <option>Mystery</option>
 <option>Self Help</option>
+<option>Young Adult</option>
 </select>
 
 <select name="priority">
