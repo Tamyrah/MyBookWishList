@@ -30,16 +30,13 @@ def home():
 
 def fetch_book_data(title):
     try:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={title}"
+        url = f"https://openlibrary.org/search.json?q={title}&limit=1"
         response = requests.get(url).json()
-
-        item = response.get("items", [])[0]
-        volume = item.get("volumeInfo", {})
-
-        return {
-            "cover_url": volume.get("imageLinks", {}).get("thumbnail"),
-            "link": volume.get("infoLink")
-        }
+        doc = response.get("docs", [])[0]
+        cover_id = doc.get("cover_i")
+        cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None
+        link = f"https://openlibrary.org/search?q={title.replace(' ', '+')}"
+        return {"cover_url": cover_url, "link": link}
     except:
         return {"cover_url": None, "link": None}
 
