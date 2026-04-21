@@ -1,71 +1,59 @@
-from flask import Flask, render_template, request, redirect, url_for
-import requests
+from flask import Flask, request, jsonify, render_template, redirect
+from supabase import create_client, Client
+import os
 
 app = Flask(__name__)
 
-books = []
+# 🔐 Supabase Setup
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-@app.route('/', methods=['GET', 'POST'])
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+# 🟢 ROUTE: LOGIN PAGE
+@app.route("/")
+def index():
+    return render_template("login.html")
+
+
+# 🟢 ROUTE: SEND MAGIC LINK
+@app.route("/login", methods=["POST"])
 def login():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        return redirect(url_for('home', user=name))
-    return render_template('login.html')
+    try:
+        data = request.get_json()
+        email = data.get("email")
+
+        if not email:
+            return jsonify({"success": False, "error": "Email is required"})
+
+        # 🔥 Send magic link
+        supabase.auth.sign_in_with_otp({
+            "email": email,
+            "options": {
+                "email_redirect_to": "https://mybookwishlist.onrender.com/home"
+            }
+        })
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("LOGIN ERROR:", e)
+        return jsonify({"success": False, "error": str(e)})
 
 
-@app.route('/home', methods=['GET'])
+# 🟢 ROUTE: HOME PAGE (AFTER LOGIN)
+@app.route("/home")
 def home():
-    user = request.args.get('user')
-    query = request.args.get('query')
-
-    results = []
-
-    if query:
-        url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{query}"
-        response = requests.get(url)
-        data = response.json()
-
-        for item in data.get('items', []):
-            volume = item.get('volumeInfo', {})
-
-            title = volume.get('title', 'No Title')
-            authors = ', '.join(volume.get('authors', ['Unknown']))
-            description = volume.get('description', 'No description available.')
-
-            image_links = volume.get('imageLinks', {})
-            thumbnail = image_links.get('thumbnail')
-
-            info_link = volume.get('infoLink', '#')
-
-            results.append({
-                'title': title,
-                'authors': authors,
-                'description': description,
-                'thumbnail': thumbnail,
-                'link': info_link
-            })
-
-    return render_template('home.html', books=books, results=results, user=user)
+    return render_template("home.html")
 
 
-@app.route('/add', methods=['POST'])
-def add_book():
-    title = request.form.get('title')
-    author = request.form.get('author')
-    genre = request.form.get('genre')
-    priority = request.form.get('priority')
-    status = request.form.get('status')
-
-    books.append({
-        'title': title,
-        'author': author,
-        'genre': genre,
-        'priority': priority,
-        'status': status
-    })
-
-    return redirect(url_for('home', user=request.args.get('user')))
+# 🟢 SAFETY CHECK ROUTE (OPTIONAL BUT USEFUL)
+@app.route("/health")
+def health():
+    return "OK", 200
 
 
-if __name__ == '__main__':
+# 🚀 RUN APP
+if __name__ == "__main__":
     app.run(debug=True)
