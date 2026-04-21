@@ -36,7 +36,8 @@ def fetch_book_data(title):
         cover_id = doc.get("cover_i")
         cover_url = f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else None
         link = f"https://openlibrary.org/search?q={title.replace(' ', '+')}"
-        synopsis = doc.get("first_sentence", [""])[0] if doc.get("first_sentence") else ""
+        subject_list = doc.get("subject", [])
+synopsis = ", ".join(subject_list[:5]) if subject_list else ""
         return {"cover_url": cover_url, "link": link, "synopsis": synopsis}
     except:
         return {"cover_url": None, "link": None, "synopsis": ""}
