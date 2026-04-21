@@ -95,16 +95,19 @@ def search():
     query = request.args.get("q")
     results = []
     if query:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10"
+        url = f"https://openlibrary.org/search.json?q={query}&limit=10"
         response = requests.get(url).json()
-        for item in response.get("items", [])[:10]:
-            volume = item.get("volumeInfo", {})
+        for doc in response.get("docs", [])[:10]:
+            title = doc.get("title", "No Title")
+            author = ", ".join(doc.get("author_name", ["Unknown"]))
+            cover_id = doc.get("cover_i")
+            thumbnail = f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg" if cover_id else ""
             results.append({
-                "title": volume.get("title", "No Title"),
-                "author": ", ".join(volume.get("authors", ["Unknown"])),
-                "description": volume.get("description", ""),
-                "thumbnail": volume.get("imageLinks", {}).get("thumbnail", ""),
-                "link": volume.get("infoLink", "#")
+                "title": title,
+                "author": author,
+                "description": "",
+                "thumbnail": thumbnail,
+                "link": f"https://openlibrary.org/search?q={query}"
             })
     books = supabase.table("books").select("*").eq("user_id", user_key).order("id", desc=True).execute().data
     return render_template("home.html", books=books, results=results, user_key=user_key)
