@@ -89,8 +89,9 @@ function scrollTopPage() {
 <button>Search</button>
 </form>
 
-<!-- 🔥 SEARCH RESULTS NOW AT TOP -->
+{% if results %}
 <h2>Search Results</h2>
+{% endif %}
 
 {% for r in results %}
 <div class="card">
