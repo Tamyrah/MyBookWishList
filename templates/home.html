@@ -185,9 +185,7 @@ function scrollTopPage() {
 Status: {{ book.status }}
 </p>
 
-{% if book.link %}
-<a href="{{ book.link }}" target="_blank">View Book</a>
-{% endif %}
+<a href="https://openlibrary.org/search?q={{ book.title | urlencode }}" target="_blank">View Book</a>
 
 <form action="/update" method="POST">
 <input type="hidden" name="id" value="{{ book.id }}">
