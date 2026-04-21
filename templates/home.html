@@ -84,13 +84,50 @@ function scrollTopPage() {
 <h2>Search Results</h2>
 
 {% for r in results %}
-<div class="card">
-<h3>{{ r.title }}</h3>
-<p>{{ r.author }}</p>
+<div class="book-card">
 
-{% if r.thumbnail %}
-<img src="{{ r.thumbnail }}">
-{% endif %}
+    <h3>{{ r.title }}</h3>
+    <p>{{ r.authors }}</p>
+
+    {% if r.thumbnail %}
+        <img src="{{ r.thumbnail }}" width="120">
+    {% else %}
+        <p>No Cover Available</p>
+    {% endif %}
+
+    <p>{{ r.description[:200] }}...</p>
+
+    <a href="{{ r.link }}" target="_blank" style="color:#00ffcc;">
+        View Book
+    </a>
+
+    <form action="/add" method="POST">
+        <input type="hidden" name="title" value="{{ r.title }}">
+        <input type="hidden" name="author" value="{{ r.authors }}">
+
+        <select name="genre">
+            <option>Fiction</option>
+            <option>Non-Fiction</option>
+            <option>Self Help</option>
+            <option>Young Adult</option>
+        </select>
+
+        <select name="priority">
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option>
+        </select>
+
+        <select name="status">
+            <option>Want to Read</option>
+            <option>Reading</option>
+            <option>Finished</option>
+        </select>
+
+        <button type="submit">Add Book</button>
+    </form>
+
+</div>
+{% endfor %}
 
 <a href="{{ r.link }}" target="_blank">View Book</a>
 
