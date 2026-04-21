@@ -92,25 +92,21 @@ def remove():
 @app.route("/search")
 def search():
     user_key = request.args.get("user")
-    query = request.args.get("query")
-
-    url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-    response = requests.get(url).json()
-
+    query = request.args.get("q")
     results = []
-    for item in response.get("items", [])[:5]:
-        volume = item.get("volumeInfo", {})
-
-        results.append({
-            "title": volume.get("title"),
-            "author": ", ".join(volume.get("authors", ["Unknown"])),
-            "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-            "link": volume.get("infoLink")
-        })
-
+    if query:
+        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10&langRestrict=en"
+        response = requests.get(url).json()
+        for item in response.get("items", [])[:10]:
+            volume = item.get("volumeInfo", {})
+            results.append({
+                "title": volume.get("title", "No Title"),
+                "author": ", ".join(volume.get("authors", ["Unknown"])),
+                "description": volume.get("description", ""),
+                "thumbnail": volume.get("imageLinks", {}).get("thumbnail", ""),
+                "link": volume.get("infoLink", "#")
+            })
     books = supabase.table("books").select("*").eq("user_id", user_key).order("id", desc=True).execute().data
-
     return render_template("home.html", books=books, results=results, user_key=user_key)
-
 if __name__ == "__main__":
     app.run(debug=True)
