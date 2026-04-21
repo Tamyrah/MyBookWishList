@@ -1,41 +1,33 @@
-from flask import Flask, render_template, request, jsonify
-from supabase import create_client
-import requests
+from flask import Flask, request, jsonify, render_template, redirect
+from supabase import create_client, Client
 import os
 
 app = Flask(__name__)
 
-# -------------------------------
-# Supabase Setup
-# -------------------------------
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# 🔐 Supabase Setup
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise Exception("Missing Supabase environment variables")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# -------------------------------
-# ROUTES
-# -------------------------------
-
-# Login Page
+# 🟢 ROUTE: LOGIN PAGE
 @app.route("/")
-def login():
+def index():
     return render_template("login.html")
 
 
-# Send Magic Link
-@app.route("/send_magic_link", methods=["POST"])
-def send_magic_link():
+# 🟢 ROUTE: SEND MAGIC LINK
+@app.route("/login", methods=["POST"])
+def login():
     try:
         data = request.get_json()
         email = data.get("email")
 
         if not email:
-            return jsonify({"error": "Email is required"}), 400
+            return jsonify({"success": False, "error": "Email is required"})
 
+        # 🔥 Send magic link
         supabase.auth.sign_in_with_otp({
             "email": email,
             "options": {
@@ -46,60 +38,22 @@ def send_magic_link():
         return jsonify({"success": True})
 
     except Exception as e:
-        print("ERROR SENDING MAGIC LINK:", str(e))
-        return jsonify({"error": str(e)}), 500
+        print("LOGIN ERROR:", e)
+        return jsonify({"success": False, "error": str(e)})
 
 
-# Home (used after clicking magic link)
+# 🟢 ROUTE: HOME PAGE (AFTER LOGIN)
 @app.route("/home")
 def home():
-    return render_template("home.html", results=[])
+    return render_template("home.html")
 
 
-# Dashboard (MAIN APP)
-@app.route("/dashboard")
-def dashboard():
-    return render_template("home.html", results=[])
+# 🟢 SAFETY CHECK ROUTE (OPTIONAL BUT USEFUL)
+@app.route("/health")
+def health():
+    return "OK", 200
 
 
-# -------------------------------
-# SEARCH ROUTE (RESTORES YOUR BOOK SEARCH)
-# -------------------------------
-@app.route("/search")
-def search():
-    try:
-        query = request.args.get("query")
-
-        if not query:
-            return render_template("home.html", results=[])
-
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}"
-        response = requests.get(url)
-        data = response.json()
-
-        results = []
-
-        if "items" in data:
-            for item in data["items"]:
-                volume = item.get("volumeInfo", {})
-
-                results.append({
-                    "title": volume.get("title", "No Title"),
-                    "author": ", ".join(volume.get("authors", ["Unknown"])),
-                    "thumbnail": volume.get("imageLinks", {}).get("thumbnail"),
-                    "link": volume.get("infoLink"),
-                    "description": volume.get("description", "No description available")
-                })
-
-        return render_template("home.html", results=results)
-
-    except Exception as e:
-        print("SEARCH ERROR:", str(e))
-        return render_template("home.html", results=[])
-
-
-# -------------------------------
-# RUN APP
-# -------------------------------
+# 🚀 RUN APP
 if __name__ == "__main__":
     app.run(debug=True)
