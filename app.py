@@ -95,7 +95,7 @@ def search():
     query = request.args.get("q")
     results = []
     if query:
-        url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10&langRestrict=en"
+    url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults=10"
         response = requests.get(url).json()
         for item in response.get("items", [])[:10]:
             volume = item.get("volumeInfo", {})
